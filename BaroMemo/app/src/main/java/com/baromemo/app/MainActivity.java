@@ -98,6 +98,8 @@ public class MainActivity extends Activity {
     private boolean calCollapsed;  // 달력을 접어 하루 화면으로 볼지
     private Uri cameraUri;         // 사진 찍기 결과가 저장될 곳
 
+    private List<String[]> customRules = new ArrayList<>(); // 내가 정한 "글자 → 이모지" 규칙
+
     // 켜 둔 기능 (설정에서 바뀌면 다시 읽는다)
     private boolean featSticker;
     private boolean featPaper;
@@ -283,16 +285,17 @@ public class MainActivity extends Activity {
     private void showSettings() {
         String[] items = {"쓸 기능 고르기", "테마 색: " + Prefs.THEME_NAMES[Prefs.theme(this)],
                 "화면 모드: " + Prefs.NIGHT_NAMES[Prefs.night(this)],
-                Reminder.label(this), "내보내기 · 백업", "사용법 보기", "의견 보내기"};
+                "내 이모지 규칙", Reminder.label(this), "내보내기 · 백업", "사용법 보기", "의견 보내기"};
         new AlertDialog.Builder(this)
                 .setTitle("설정")
                 .setItems(items, (d, which) -> {
                     if (which == 0) showFeatureDialog();
                     else if (which == 1) showThemeDialog();
                     else if (which == 2) showNightDialog();
-                    else if (which == 3) showReminderDialog();
-                    else if (which == 4) showExportMenu();
-                    else if (which == 5) showGuide();
+                    else if (which == 3) showRulesDialog();
+                    else if (which == 4) showReminderDialog();
+                    else if (which == 5) showExportMenu();
+                    else if (which == 6) showGuide();
                     else sendFeedback();
                 })
                 .show();
@@ -364,6 +367,61 @@ public class MainActivity extends Activity {
                     d.dismiss();
                     recreate(); // 새 색으로 화면을 다시 그린다
                 })
+                .show();
+    }
+
+    /** 내 이모지 규칙: 메모에 정해 둔 글자가 있으면, 글은 그대로 두고 이모지를 스티커로 붙인다. */
+    private void showRulesDialog() {
+        final List<String[]> rules = CustomRules.load(this);
+        final int n = rules.size();
+        String[] items = new String[n + 1];
+        for (int i = 0; i < n; i++) items[i] = rules.get(i)[0] + "  →  " + rules.get(i)[1] + "   (누르면 삭제)";
+        items[n] = "＋ 규칙 추가";
+        new AlertDialog.Builder(this)
+                .setTitle("내 이모지 규칙")
+                .setItems(items, (d, which) -> {
+                    if (which < n) {
+                        CustomRules.remove(this, which);
+                        refresh();
+                        showRulesDialog();
+                    } else {
+                        showAddRuleDialog();
+                    }
+                })
+                .setPositiveButton("닫기", null)
+                .show();
+    }
+
+    private void showAddRuleDialog() {
+        final EditText trigger = new EditText(this);
+        trigger.setHint("메모에 쓸 글자 (예: 강복길<)");
+        trigger.setSingleLine(true);
+        final EditText emoji = new EditText(this);
+        emoji.setHint("붙일 이모지 (예: 🐶)");
+        emoji.setSingleLine(true);
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(20), dp(8), dp(20), 0);
+        box.addView(trigger, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        box.addView(emoji, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        new AlertDialog.Builder(this)
+                .setTitle("규칙 추가")
+                .setMessage("메모에 이 글자가 들어 있으면 글은 그대로 두고, 카드 오른쪽에 이모지를 붙여요.")
+                .setView(box)
+                .setPositiveButton("추가", (d, w) -> {
+                    String t = trigger.getText().toString().trim();
+                    String e = emoji.getText().toString().trim();
+                    if (t.isEmpty() || e.isEmpty()) {
+                        Toast.makeText(this, "글자와 이모지를 모두 적어 주세요", Toast.LENGTH_SHORT).show();
+                    } else {
+                        CustomRules.add(this, t, e);
+                        refresh();
+                    }
+                    showRulesDialog();
+                })
+                .setNegativeButton("취소", (d, w) -> showRulesDialog())
                 .show();
     }
 
@@ -467,6 +525,7 @@ public class MainActivity extends Activity {
 
     private void refresh() {
         List<Note> all = NoteStore.load(this); // 최신이 앞
+        customRules = CustomRules.load(this);
         shown.clear();
         String emptyMessage = null;
 
@@ -1009,7 +1068,9 @@ public class MainActivity extends Activity {
 
             // 내용에 맞는 스티커(켰을 때만)
             TextView sticker = convertView.findViewById(R.id.row_sticker);
-            String emoji = featSticker ? Sticker.pick(n.text) : null;
+            // 내가 정한 규칙이 먼저, 없으면 자동 스티커(켰을 때만)
+            String emoji = CustomRules.pick(customRules, n.text);
+            if (emoji == null && featSticker) emoji = Sticker.pick(n.text);
             if (emoji != null) {
                 sticker.setText(emoji);
                 sticker.setVisibility(View.VISIBLE);
