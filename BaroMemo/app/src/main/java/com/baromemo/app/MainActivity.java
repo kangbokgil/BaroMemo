@@ -562,6 +562,66 @@ public class MainActivity extends Activity {
 
     // ───── 탭 ─────
 
+    // ───── 옆으로 넘겨서 탭 바꾸기 ─────
+
+    private float swipeX, swipeY;
+    private long swipeTime;
+    private boolean swipeOk;
+
+    /** 화면을 옆으로 빠르게 넘기면 목록 → 달력 → 요약 순서로 오간다 (켜 둔 탭만). */
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        int action = ev.getActionMasked();
+        if (action == android.view.MotionEvent.ACTION_DOWN) {
+            swipeX = ev.getRawX();
+            swipeY = ev.getRawY();
+            swipeTime = ev.getEventTime();
+            // 글자 입력칸과 옆으로 미는 태그 줄에서 시작한 손짓은 탭 넘기기로 보지 않는다
+            swipeOk = !touches(input, ev) && !touches(search, ev)
+                    && !touches(findViewById(R.id.input_tag_scroll), ev) && !touches(tagScroll, ev);
+        } else if (action == android.view.MotionEvent.ACTION_POINTER_DOWN) {
+            swipeOk = false; // 두 손가락은 넘기기가 아니다
+        } else if (action == android.view.MotionEvent.ACTION_UP && swipeOk) {
+            float dx = ev.getRawX() - swipeX;
+            float dy = ev.getRawY() - swipeY;
+            boolean sideways = Math.abs(dx) > dp(90) && Math.abs(dx) > 2.5f * Math.abs(dy);
+            if (sideways && ev.getEventTime() - swipeTime < 600 && moveTab(dx < 0 ? 1 : -1)) {
+                // 넘기기로 처리했으니, 아래 메모가 "눌린" 것으로 처리되지 않게 취소로 넘긴다
+                android.view.MotionEvent cancel = android.view.MotionEvent.obtain(ev);
+                cancel.setAction(android.view.MotionEvent.ACTION_CANCEL);
+                super.dispatchTouchEvent(cancel);
+                cancel.recycle();
+                return true;
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private boolean touches(View v, android.view.MotionEvent ev) {
+        if (v == null || !v.isShown()) return false;
+        int[] at = new int[2];
+        v.getLocationOnScreen(at);
+        float x = ev.getRawX(), y = ev.getRawY();
+        return x >= at[0] && x <= at[0] + v.getWidth() && y >= at[1] && y <= at[1] + v.getHeight();
+    }
+
+    /** step: +1 다음 탭, -1 이전 탭. 옮겼으면 true. */
+    private boolean moveTab(int step) {
+        List<Integer> tabs = new ArrayList<>();
+        tabs.add(MODE_LIST);
+        if (Prefs.on(this, Prefs.CALENDAR)) tabs.add(MODE_CALENDAR);
+        if (Prefs.on(this, Prefs.SUMMARY)) tabs.add(MODE_SUMMARY);
+        int next = tabs.indexOf(mode) + step;
+        if (next < 0 || next >= tabs.size()) return false;
+        setMode(tabs.get(next));
+        // 탭 줄을 접어 둔 상태면 어디로 왔는지 알려 준다
+        if (!Prefs.on(this, "tools_open")) {
+            String[] names = {"목록", "달력", "요약"};
+            Toast.makeText(this, names[mode], Toast.LENGTH_SHORT).show();
+        }
+        return true;
+    }
+
     private void setMode(int newMode) {
         mode = newMode;
         selected.clear();
