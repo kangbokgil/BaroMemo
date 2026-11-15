@@ -5,6 +5,14 @@
     <color name="surface">#1E1E1E</color>
     <color name="text">#ECECEC</color>
     <color name="sub">#9A9A9A</color>
+    <color name="p_simple">#EDEDED</color>
+    <color name="p_simple_soft">#2E2E31</color>
+    <color name="p_simple_on">#111111</color>
+    <color name="p_coral_soft">#4A2A20</color>
+    <color name="p_mint_soft">#173A33</color>
+    <color name="p_lavender_soft">#2C2748</color>
+    <color name="p_blue_soft">#1B2C4D</color>
+    <color name="p_pink_soft">#4A2030</color>
     <color name="paper1">#2A241C</color>
     <color name="paper2">#2B1F23</color>
     <color name="paper3">#1D2720</color>
