@@ -118,6 +118,23 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- 접기/펼치기: 아래 도구 줄(기분, 태그, 탭, 검색)을 접어서 목록을 넓게 본다 -->
+        <TextView
+            android:id="@+id/fold"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:textColor="@color/sub"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:id="@+id/tools_box"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
         <!-- 기분 한 번에 기록: 누르면 그 기분이 바로 저장된다 (입력칸에 쓴 글이 있으면 같이) -->
         <LinearLayout
             android:id="@+id/mood_row"
@@ -244,6 +261,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal" />
         </HorizontalScrollView>
+
+        </LinearLayout>
 
         <!-- 달력 탭 -->
         <LinearLayout
