@@ -2,6 +2,7 @@ package com.baromemo.app;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
@@ -26,6 +27,11 @@ public class QuickInputActivity extends Activity {
     };
 
     private EditText input;
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Ui.wrap(base));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

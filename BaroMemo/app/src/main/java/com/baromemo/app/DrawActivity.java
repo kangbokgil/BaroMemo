@@ -34,6 +34,11 @@ public class DrawActivity extends Activity {
     private int widthIndex = 1;
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Ui.wrap(base));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         Ui.applyPalette(this);
         super.onCreate(savedInstanceState);

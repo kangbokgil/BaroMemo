@@ -8,6 +8,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
@@ -101,6 +102,11 @@ public class MainActivity extends Activity {
     private boolean featSticker;
     private boolean featPaper;
     private boolean featTags;
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Ui.wrap(base));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -276,15 +282,17 @@ public class MainActivity extends Activity {
 
     private void showSettings() {
         String[] items = {"쓸 기능 고르기", "테마 색: " + Prefs.THEME_NAMES[Prefs.theme(this)],
+                "화면 모드: " + Prefs.NIGHT_NAMES[Prefs.night(this)],
                 Reminder.label(this), "내보내기 · 백업", "사용법 보기", "의견 보내기"};
         new AlertDialog.Builder(this)
                 .setTitle("설정")
                 .setItems(items, (d, which) -> {
                     if (which == 0) showFeatureDialog();
                     else if (which == 1) showThemeDialog();
-                    else if (which == 2) showReminderDialog();
-                    else if (which == 3) showExportMenu();
-                    else if (which == 4) showGuide();
+                    else if (which == 2) showNightDialog();
+                    else if (which == 3) showReminderDialog();
+                    else if (which == 4) showExportMenu();
+                    else if (which == 5) showGuide();
                     else sendFeedback();
                 })
                 .show();
@@ -355,6 +363,18 @@ public class MainActivity extends Activity {
                     Prefs.setTheme(this, which);
                     d.dismiss();
                     recreate(); // 새 색으로 화면을 다시 그린다
+                })
+                .show();
+    }
+
+    /** 폰이 다크 모드여도 앱만 밝게(또는 반대로) 쓸 수 있게 한다. */
+    private void showNightDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("화면 모드")
+                .setSingleChoiceItems(Prefs.NIGHT_NAMES, Prefs.night(this), (d, which) -> {
+                    Prefs.setNight(this, which);
+                    d.dismiss();
+                    recreate();
                 })
                 .show();
     }

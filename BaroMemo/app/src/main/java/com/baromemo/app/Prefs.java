@@ -71,6 +71,18 @@ public final class Prefs {
         prefs(ctx).edit().putInt("theme", index).apply();
     }
 
+    /** 화면 모드: 0 폰 설정 따르기, 1 항상 밝게, 2 항상 어둡게. */
+    public static final String[] NIGHT_NAMES = {"폰 설정 따르기", "항상 밝게", "항상 어둡게"};
+
+    public static int night(Context ctx) {
+        int n = prefs(ctx).getInt("night", 0);
+        return (n < 0 || n > 2) ? 0 : n;
+    }
+
+    public static void setNight(Context ctx, int mode) {
+        prefs(ctx).edit().putInt("night", mode).apply();
+    }
+
     public static int themeStyle(Context ctx) {
         return THEME_STYLES[theme(ctx)];
     }
