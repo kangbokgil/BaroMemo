@@ -45,11 +45,11 @@ public final class Tags {
         return out;
     }
 
-    /** 해시태그는 색과 굵기로, 웹 주소는 색과 밑줄로 표시한 글. */
-    public static CharSequence highlight(String text, int color) {
+    /** 해시태그는 색과 굵기로, 웹 주소는(links가 참일 때) 색과 밑줄로 표시한 글. */
+    public static CharSequence highlight(String text, int color, boolean links) {
         SpannableString s = new SpannableString(text);
         Matcher link = Patterns.WEB_URL.matcher(text);
-        while (link.find()) {
+        while (links && link.find()) {
             s.setSpan(new ForegroundColorSpan(color), link.start(), link.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             s.setSpan(new UnderlineSpan(), link.start(), link.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }

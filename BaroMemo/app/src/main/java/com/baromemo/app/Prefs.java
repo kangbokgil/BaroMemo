@@ -10,6 +10,7 @@ public final class Prefs {
     public static final String PHOTO = "photo";
     public static final String VOICE = "voice";
     public static final String DRAW = "draw";
+    public static final String LINKS = "links";
     public static final String TAGS = "tags";
     public static final String CALENDAR = "calendar";
     public static final String SUMMARY = "summary";
@@ -17,13 +18,14 @@ public final class Prefs {
     public static final String PREVIEW = "preview";
 
     /** 설정 화면에 나오는 순서. */
-    public static final String[] KEYS = {MOOD, TAGS, PHOTO, DRAW, VOICE, STICKER, CALENDAR, SUMMARY, PAPER, PREVIEW};
+    public static final String[] KEYS = {MOOD, TAGS, PHOTO, DRAW, VOICE, LINKS, STICKER, CALENDAR, SUMMARY, PAPER, PREVIEW};
     public static final String[] LABELS = {
             "기분 이모지 버튼",
             "해시태그 버튼",
             "사진 첨부",
             "간단한 그림 그리기",
             "받아쓰기 (음성 입력)",
+            "링크 표시하고 열기",
             "내용에 맞는 자동 스티커",
             "달력 탭",
             "요약 탭",

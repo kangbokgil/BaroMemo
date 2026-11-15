@@ -104,6 +104,7 @@ public class MainActivity extends Activity {
     private boolean featSticker;
     private boolean featPaper;
     private boolean featTags;
+    private boolean featLinks;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -269,6 +270,7 @@ public class MainActivity extends Activity {
         featSticker = Prefs.on(this, Prefs.STICKER);
         featPaper = Prefs.on(this, Prefs.PAPER);
         featTags = Prefs.on(this, Prefs.TAGS);
+        featLinks = Prefs.on(this, Prefs.LINKS);
 
         micButton.setVisibility(Prefs.on(this, Prefs.VOICE) ? View.VISIBLE : View.GONE);
         boolean attach = Prefs.on(this, Prefs.PHOTO) || Prefs.on(this, Prefs.DRAW);
@@ -972,7 +974,7 @@ public class MainActivity extends Activity {
     private void showActions(final Note target) {
         String title = noteLine(target);
         if (title.length() > 30) title = title.substring(0, 30) + "…";
-        final List<String> urls = Tags.urls(target.text);
+        final List<String> urls = featLinks ? Tags.urls(target.text) : new ArrayList<String>();
         final List<String> labels = new ArrayList<>();
         final List<Runnable> actions = new ArrayList<>();
         if (!urls.isEmpty()) {
@@ -1088,7 +1090,7 @@ public class MainActivity extends Activity {
             time.setTextColor(picked ? accent : getColor(R.color.sub));
             time.setTypeface(null, picked ? Typeface.BOLD : Typeface.NORMAL);
 
-            text.setText(Tags.highlight(n.text, Ui.tagColor(MainActivity.this)));
+            text.setText(Tags.highlight(n.text, Ui.tagColor(MainActivity.this), featLinks));
             text.setVisibility(n.text.isEmpty() ? View.GONE : View.VISIBLE);
 
             // 종이 색(켰을 때만)
