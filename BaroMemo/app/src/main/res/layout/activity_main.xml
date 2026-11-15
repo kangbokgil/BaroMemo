@@ -70,16 +70,17 @@
                 android:textColorHint="@color/sub"
                 android:textSize="16sp" />
 
-            <TextView
+            <ImageView
                 android:id="@+id/mic"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:clickable="true"
                 android:contentDescription="받아쓰기"
                 android:focusable="true"
-                android:gravity="center"
-                android:text="🎤"
-                android:textSize="20sp" />
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_w_mic"
+                android:tint="@color/sub" />
 
             <TextView
                 android:id="@+id/photo"
