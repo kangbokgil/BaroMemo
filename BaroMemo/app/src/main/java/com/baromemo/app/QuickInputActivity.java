@@ -25,6 +25,8 @@ public class QuickInputActivity extends Activity {
     private static final int[] EMOTION_IDS = {
             R.id.emo1, R.id.emo2, R.id.emo3, R.id.emo4, R.id.emo5
     };
+    /** 버튼은 선 그림이고, 메모에는 이 이모지가 저장된다 (기분 요약이 이걸 센다). */
+    private static final String[] EMOTIONS = {"😊", "🙂", "😐", "😔", "😢"};
 
     private EditText input;
 
@@ -65,9 +67,9 @@ public class QuickInputActivity extends Activity {
         View emoRow = findViewById(R.id.emo_row);
         emoRow.setVisibility(Prefs.on(this, Prefs.MOOD) ? View.VISIBLE : View.GONE);
         // 기분 이모지를 누르면 글이 없어도 그 자리에서 저장
-        for (int id : EMOTION_IDS) {
-            TextView emo = findViewById(id);
-            emo.setOnClickListener(v -> saveAndClose(((TextView) v).getText().toString()));
+        for (int i = 0; i < EMOTION_IDS.length; i++) {
+            final String mood = EMOTIONS[i];
+            findViewById(EMOTION_IDS[i]).setOnClickListener(v -> saveAndClose(mood));
         }
 
         View tagScroll = findViewById(R.id.quick_tag_scroll);
