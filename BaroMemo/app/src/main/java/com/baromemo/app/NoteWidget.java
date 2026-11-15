@@ -104,7 +104,7 @@ public class NoteWidget extends AppWidgetProvider {
     private static String line(Note n) {
         String time = new SimpleDateFormat("HH:mm", Locale.KOREA).format(new Date(n.time));
         String text = n.text.replace('\n', ' ');
-        return time + "  " + (n.photo != null ? (text.isEmpty() ? "📷 사진" : "📷 ") : "") + text;
+        return time + "  " + (n.photo != null ? (text.isEmpty() ? "사진" : "[사진] ") : "") + text;
     }
 
     private static PendingIntent activity(Context ctx, int requestCode, Intent intent) {
