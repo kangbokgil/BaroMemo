@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="바로메모"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="stateVisible|adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 위젯·알림을 누르면 뜨는 작은 입력창 -->
+        <activity
+            android:name=".QuickInputActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/QuickTheme"
+            android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
+
+        <!-- 알림창에서 바로 입력한 내용을 저장 -->
+        <receiver
+            android:name=".NoteReplyReceiver"
+            android:exported="false" />
+
+        <!-- 매일 정해진 시간의 기록 알림 -->
+        <receiver
+            android:name=".ReminderReceiver"
+            android:exported="false" />
+
+        <!-- 빠른 설정창의 메모 버튼 -->
+        <service
+            android:name=".QuickTile"
+            android:exported="true"
+            android:icon="@drawable/ic_note"
+            android:label="바로메모"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- 폰을 재부팅해도 알림창 입력칸 다시 띄우기 -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 홈 화면 위젯 -->
+        <receiver
+            android:name=".NoteWidget"
+            android:exported="true"
+            android:label="바로메모">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/note_widget_info" />
+        </receiver>
+    </application>
+</manifest>
