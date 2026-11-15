@@ -2,7 +2,9 @@ package com.baromemo.app;
 
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.graphics.Typeface;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,6 +36,7 @@ public final class Tags {
         Matcher m = TAG.matcher(text);
         while (m.find()) {
             s.setSpan(new ForegroundColorSpan(color), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            s.setSpan(new StyleSpan(Typeface.BOLD), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         return s;
     }

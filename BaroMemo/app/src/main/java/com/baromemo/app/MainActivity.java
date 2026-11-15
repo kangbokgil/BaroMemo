@@ -976,7 +976,7 @@ public class MainActivity extends Activity {
             time.setTextColor(picked ? accent : getColor(R.color.sub));
             time.setTypeface(null, picked ? Typeface.BOLD : Typeface.NORMAL);
 
-            text.setText(Tags.highlight(n.text, accent));
+            text.setText(Tags.highlight(n.text, Ui.tagColor(MainActivity.this)));
             text.setVisibility(n.text.isEmpty() ? View.GONE : View.VISIBLE);
 
             // 종이 색(켰을 때만)

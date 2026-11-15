@@ -17,6 +17,11 @@ public final class Ui {
         return attrColor(ctx, R.attr.bmAccent);
     }
 
+    /** 해시태그 글자색. 심플 테마에서는 본문과 구분되도록 파란색, 그 밖에는 테마 강조색. */
+    public static int tagColor(Context ctx) {
+        return Prefs.theme(ctx) == 0 ? ctx.getColor(R.color.tag_simple) : accent(ctx);
+    }
+
     public static int onAccent(Context ctx) {
         return attrColor(ctx, R.attr.bmOnAccent);
     }

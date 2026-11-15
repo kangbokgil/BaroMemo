@@ -35,7 +35,7 @@ public final class TagBar {
         chip.setPadding(padH, 0, padH, 0);
         chip.setMinWidth((int) (34 * density + 0.5f));
         chip.setBackgroundResource(background);
-        chip.setTextColor(Ui.accent(a));
+        chip.setTextColor(Ui.tagColor(a));
         chip.setOnClickListener(onClick);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, (int) (32 * density + 0.5f));
