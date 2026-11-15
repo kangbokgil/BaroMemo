@@ -3,34 +3,52 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="14dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_field"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:minHeight="52dp"
+        android:orientation="horizontal"
+        android:paddingStart="18dp"
+        android:paddingEnd="6dp">
 
         <EditText
             android:id="@+id/quick_input"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@null"
             android:hint="떠오른 걸 바로 적으세요"
             android:imeOptions="actionDone"
             android:inputType="text"
-            android:minHeight="48dp" />
+            android:minHeight="48dp"
+            android:textColor="@color/text"
+            android:textColorHint="@color/sub"
+            android:textSize="16sp" />
 
-        <Button
+        <TextView
             android:id="@+id/quick_save"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="저장" />
+            android:layout_height="40dp"
+            android:background="@drawable/bg_btn_accent"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:text="저장"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
+        android:layout_marginTop="6dp"
         android:orientation="horizontal">
 
         <TextView android:id="@+id/emo1" android:layout_width="0dp" android:layout_height="match_parent"

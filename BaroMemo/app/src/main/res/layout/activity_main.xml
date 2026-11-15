@@ -1,83 +1,233 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:background="@color/bg"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="4dp">
 
-        <EditText
-            android:id="@+id/input"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="떠오른 걸 바로 적으세요"
-            android:imeOptions="actionDone"
-            android:inputType="text"
-            android:minHeight="48dp" />
-
-        <Button
-            android:id="@+id/save"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="저장" />
-    </LinearLayout>
+            android:paddingStart="4dp"
+            android:paddingBottom="12dp"
+            android:text="바로메모"
+            android:textColor="@color/text"
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/search"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="🔍 메모 검색"
-        android:imeOptions="actionSearch"
-        android:inputType="text"
-        android:minHeight="48dp"
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/empty"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="24dp"
-        android:gravity="center"
-        android:text="아직 메모가 없어요.\n위젯이나 알림창에서 바로 적어 보세요."
-        android:visibility="gone" />
-
-    <ListView
-        android:id="@+id/list"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="4dp"
-        android:text="메모를 누르면 수정, 길게 누르면 삭제"
-        android:textSize="12sp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/reminder"
-            android:layout_width="0dp"
+        <!-- 입력 -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="기록 알림: 꺼짐" />
+            android:background="@drawable/bg_input"
+            android:gravity="center_vertical"
+            android:minHeight="52dp"
+            android:orientation="horizontal"
+            android:paddingStart="18dp"
+            android:paddingEnd="6dp">
 
-        <Button
-            android:id="@+id/share"
-            android:layout_width="0dp"
+            <EditText
+                android:id="@+id/input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="떠오른 걸 바로 적으세요"
+                android:imeOptions="actionDone"
+                android:inputType="text"
+                android:minHeight="48dp"
+                android:textColor="@color/text"
+                android:textColorHint="@color/sub"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/photo"
+                android:layout_width="44dp"
+                android:layout_height="40dp"
+                android:clickable="true"
+                android:contentDescription="사진 첨부"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="📷"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/save"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_btn_accent"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"
+                android:text="저장"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 탭 -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal">
+
+            <TextView android:id="@+id/tab_list" style="@style/Tab" android:text="목록" />
+            <TextView android:id="@+id/tab_calendar" style="@style/Tab" android:text="달력" />
+            <TextView android:id="@+id/tab_summary" style="@style/Tab" android:text="요약" />
+        </LinearLayout>
+
+        <!-- 목록 탭: 검색 -->
+        <EditText
+            android:id="@+id/search"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_input"
+            android:hint="🔍 메모 검색"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:textColor="@color/text"
+            android:textColorHint="@color/sub"
+            android:textSize="14sp" />
+
+        <!-- 달력 탭 -->
+        <LinearLayout
+            android:id="@+id/calendar_pane"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/cal_prev"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="‹"
+                    android:textColor="@color/text"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:id="@+id/cal_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textColor="@color/text"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/cal_next"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="›"
+                    android:textColor="@color/text"
+                    android:textSize="24sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cal_weekdays"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+            <LinearLayout
+                android:id="@+id/cal_grid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/day_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingStart="4dp"
+            android:textColor="@color/sub"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingTop="24dp"
+            android:textColor="@color/sub"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <ListView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="10dp"
             android:layout_weight="1"
-            android:text="전체 내보내기" />
+            android:divider="@android:color/transparent"
+            android:dividerHeight="8dp"
+            android:listSelector="@android:color/transparent"
+            android:scrollbars="none" />
+
+        <!-- 요약 탭 -->
+        <ScrollView
+            android:id="@+id/summary_pane"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/summary_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card"
+                android:lineSpacingExtra="5dp"
+                android:padding="18dp"
+                android:textColor="@color/text"
+                android:textIsSelectable="true"
+                android:textSize="15sp" />
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <TextView android:id="@+id/reminder" style="@style/Flat" android:text="기록 알림: 꺼짐" />
+            <TextView android:id="@+id/share" style="@style/Flat" android:text="전체 내보내기" />
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>
