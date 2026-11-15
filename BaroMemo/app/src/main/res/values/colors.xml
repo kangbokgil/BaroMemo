@@ -22,6 +22,8 @@
     <color name="p_pink">#F06292</color>
     <color name="p_pink_soft">#FDE3EC</color>
     <color name="p_white">#FFFFFF</color>
+    <!-- 심플 테마는 강조색이 글자색과 비슷해서, 해시태그만 따로 파란색을 쓴다 -->
+    <color name="tag_simple">#2F6FDE</color>
 
     <!-- 메모 카드 종이 색 (다이어리 느낌) -->
     <color name="paper1">#FFF4E6</color>
