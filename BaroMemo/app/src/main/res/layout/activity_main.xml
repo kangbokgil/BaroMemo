@@ -115,6 +115,22 @@
             android:textColorHint="@color/sub"
             android:textSize="14sp" />
 
+        <!-- 목록 탭: 해시태그 모음 -->
+        <HorizontalScrollView
+            android:id="@+id/tag_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/tag_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
         <!-- 달력 탭 -->
         <LinearLayout
             android:id="@+id/calendar_pane"
@@ -146,8 +162,10 @@
                 <TextView
                     android:id="@+id/cal_title"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:gravity="center"
                     android:textColor="@color/text"
                     android:textSize="16sp"
@@ -180,12 +198,17 @@
 
         <TextView
             android:id="@+id/day_title"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:paddingStart="4dp"
-            android:textColor="@color/sub"
-            android:textSize="13sp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_card"
+            android:lineSpacingExtra="4dp"
+            android:paddingStart="16dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="12dp"
+            android:textColor="@color/text"
+            android:textSize="14sp"
             android:visibility="gone" />
 
         <TextView
