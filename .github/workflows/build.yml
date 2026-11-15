@@ -14,6 +14,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # 서명 키를 두는 폴더를 고정한다 (안드로이드 빌드 도구가 이 폴더의 debug.keystore를 쓴다)
+      ANDROID_USER_HOME: /home/runner/.android-user
     defaults:
       run:
         working-directory: BaroMemo
@@ -26,13 +29,23 @@ jobs:
           java-version: '17'
 
       # 빌드마다 서명이 바뀌면 덮어 설치가 안 된다.
-      # 처음 만들어진 서명 키를 GitHub 캐시에 보관해 두고 다음 빌드부터 같은 키를 쓴다.
+      # 처음 만든 서명 키를 GitHub 캐시에 보관해 두고 다음 빌드부터 같은 키를 쓴다.
       # (키 파일은 저장소에 올라가지 않는다.)
       - name: Keep the same signing key between builds
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
+          path: /home/runner/.android-user/debug.keystore
           key: baromemo-debug-keystore-v1
+
+      - name: Create signing key if missing
+        run: |
+          mkdir -p "$ANDROID_USER_HOME"
+          if [ ! -f "$ANDROID_USER_HOME/debug.keystore" ]; then
+            keytool -genkeypair -keystore "$ANDROID_USER_HOME/debug.keystore" \
+              -storepass android -keypass android -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
 
       - uses: gradle/actions/setup-gradle@v4
         with:
