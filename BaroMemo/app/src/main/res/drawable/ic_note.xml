@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 상태 표시줄·알림 버튼용 단색 아이콘: 앱 아이콘과 같은 모양(원근 종이 + 펜 + 잔상) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp"
     android:viewportWidth="24" android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF"
-        android:pathData="M3,17.25V21h3.75L17.81,9.94l-3.75,-3.75L3,17.25zM20.71,7.04c0.39,-0.39 0.39,-1.02 0,-1.41l-2.34,-2.34c-0.39,-0.39 -1.02,-0.39 -1.41,0l-1.83,1.83 3.75,3.75 1.83,-1.83z" />
+    <path android:pathData="M8.2,10.9L12.2,5.4" android:strokeColor="#FFFFFFFF" android:strokeAlpha="0.3"
+        android:strokeWidth="2.4" android:strokeLineCap="round" />
+    <path android:pathData="M10.9,10.5L15.2,4.6" android:strokeColor="#FFFFFFFF" android:strokeAlpha="0.55"
+        android:strokeWidth="2.4" android:strokeLineCap="round" />
+    <path android:pathData="M3.5,14.5L12,11L20.5,15L11,19.5Z" android:fillColor="#FFFFFFFF"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="1" android:strokeLineJoin="round" />
+    <path android:pathData="M13.8,11.6L18.5,5" android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2.6" android:strokeLineCap="round" />
 </vector>
