@@ -19,6 +19,19 @@
         <item name="bmOnAccent">@color/p_simple_on</item>
     </style>
 
+    <!-- 화면 없이 대화상자만 띄우는 투명한 화면용 -->
+    <style name="ClearTheme" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="bmAccent">@color/p_simple</item>
+        <item name="bmAccentSoft">@color/p_simple_soft</item>
+        <item name="bmOnAccent">@color/p_simple_on</item>
+    </style>
+
     <!-- 테마 색 묶음: 화면이 열릴 때 고른 것을 덧씌운다 -->
     <style name="Palette.Simple" parent="">
         <item name="bmAccent">@color/p_simple</item>
