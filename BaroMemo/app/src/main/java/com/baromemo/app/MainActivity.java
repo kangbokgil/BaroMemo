@@ -175,6 +175,13 @@ public class MainActivity extends Activity {
         });
         attachButton.setOnClickListener(v -> chooseAttachment());
         micButton.setOnClickListener(v -> startDictation());
+        // 기분 버튼: 위젯의 기분 기록과 같은 다섯 가지
+        final String[] moods = {"😊", "🙂", "😐", "😔", "😡"};
+        final int[] moodIds = {R.id.mood1, R.id.mood2, R.id.mood3, R.id.mood4, R.id.mood5};
+        for (int i = 0; i < moodIds.length; i++) {
+            final String mood = moods[i];
+            findViewById(moodIds[i]).setOnClickListener(v -> saveMood(mood));
+        }
         findViewById(R.id.settings).setOnClickListener(v -> showSettings());
 
         search.addTextChangedListener(new TextWatcher() {
@@ -309,6 +316,7 @@ public class MainActivity extends Activity {
         featLinks = Prefs.on(this, Prefs.LINKS);
 
         micButton.setVisibility(Prefs.on(this, Prefs.VOICE) ? View.VISIBLE : View.GONE);
+        findViewById(R.id.mood_row).setVisibility(Prefs.on(this, Prefs.MOOD) ? View.VISIBLE : View.GONE);
         boolean attach = Prefs.on(this, Prefs.PHOTO) || Prefs.on(this, Prefs.DRAW);
         attachButton.setVisibility(attach ? View.VISIBLE : View.GONE);
 
@@ -776,6 +784,16 @@ public class MainActivity extends Activity {
     }
 
     // ───── 메모 저장 ─────
+
+    /** 기분 버튼: 기분만, 또는 입력칸에 쓴 글과 함께 바로 저장한다. */
+    private void saveMood(String mood) {
+        String typed = input.getText().toString().trim();
+        if (NoteStore.add(this, typed.isEmpty() ? mood : mood + " " + typed)) {
+            input.setText("");
+            refresh();
+            Toast.makeText(this, "기분을 기록했어요", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void saveInput() {
         if (NoteStore.add(this, input.getText())) {
