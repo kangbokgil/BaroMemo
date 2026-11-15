@@ -1,6 +1,7 @@
 package com.baromemo.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -13,6 +14,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -115,12 +117,35 @@ public class DrawActivity extends Activity {
             Toast.makeText(this, "그린 게 없어요", Toast.LENGTH_SHORT).show();
             return;
         }
-        String name = NoteStore.saveBitmap(this, canvas.toBitmap());
+        final String name = NoteStore.saveBitmap(this, canvas.toBitmap());
         if (name == null) {
             Toast.makeText(this, "그림을 저장하지 못했어요", Toast.LENGTH_SHORT).show();
             return;
         }
-        NoteStore.add(this, getIntent().getStringExtra(EXTRA_TEXT), name);
+        // 입력칸에 미리 적어 둔 글이 있으면 그 글과 함께 저장하고, 없으면 그림에 붙일 글을 물어본다
+        String preset = getIntent().getStringExtra(EXTRA_TEXT);
+        if (preset != null && !preset.trim().isEmpty()) {
+            finishWith(name, preset);
+            return;
+        }
+        final EditText caption = new EditText(this);
+        caption.setHint("그림에 붙일 글 (안 써도 돼요)");
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(20), dp(8), dp(20), 0);
+        box.addView(caption, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        new AlertDialog.Builder(this)
+                .setTitle("그림 메모")
+                .setView(box)
+                .setPositiveButton("저장", (d, w) -> finishWith(name, caption.getText().toString()))
+                .setNegativeButton("글 없이 저장", (d, w) -> finishWith(name, ""))
+                .setOnCancelListener(d -> finishWith(name, ""))
+                .show();
+    }
+
+    private void finishWith(String photoName, String text) {
+        NoteStore.add(this, text, photoName);
         setResult(RESULT_OK);
         finish();
     }
