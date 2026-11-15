@@ -28,6 +28,7 @@ public class CaptureActivity extends Activity {
     public static final String EXTRA_MODE = "mode";
     public static final String MODE_VOICE = "voice";
     public static final String MODE_ATTACH = "attach";
+    public static final String MODE_PHOTO = "photo";
 
     private static final int REQ_SPEECH = 1;
     private static final int REQ_PHOTO = 2;
@@ -49,10 +50,11 @@ public class CaptureActivity extends Activity {
             cameraUri = savedInstanceState.getParcelable("cameraUri");
             return;
         }
-        if (MODE_VOICE.equals(getIntent().getStringExtra(EXTRA_MODE))) {
+        String mode = getIntent().getStringExtra(EXTRA_MODE);
+        if (MODE_VOICE.equals(mode)) {
             startVoice();
         } else {
-            chooseAttachment();
+            chooseAttachment(MODE_PHOTO.equals(mode));
         }
     }
 
@@ -79,16 +81,17 @@ public class CaptureActivity extends Activity {
 
     // ───── 사진 · 그림 ─────
 
-    private void chooseAttachment() {
+    /** photoOnly: 사진 버튼에서 왔으면 사진 찍기/갤러리만 보여 준다. */
+    private void chooseAttachment(boolean photoOnly) {
         final List<String> labels = new ArrayList<>();
         final List<Runnable> actions = new ArrayList<>();
-        if (Prefs.on(this, Prefs.PHOTO)) {
+        if (photoOnly || Prefs.on(this, Prefs.PHOTO)) {
             labels.add("사진 찍기");
             actions.add(this::takePhoto);
             labels.add("갤러리에서 고르기");
             actions.add(this::pickPhoto);
         }
-        if (Prefs.on(this, Prefs.DRAW)) {
+        if (!photoOnly && Prefs.on(this, Prefs.DRAW)) {
             labels.add("그림 그리기");
             actions.add(this::openDrawing);
         }

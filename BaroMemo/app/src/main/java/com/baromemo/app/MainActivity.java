@@ -103,6 +103,7 @@ public class MainActivity extends Activity {
     // 켜 둔 기능 (설정에서 바뀌면 다시 읽는다)
     private boolean featSticker;
     private boolean featPaper;
+    private int listStyle; // 0 카드, 1 줄 목록, 2 말풍선
     private boolean featTags;
     private boolean featLinks;
 
@@ -149,6 +150,9 @@ public class MainActivity extends Activity {
         month = Calendar.getInstance();
         syncMonthToSelectedDay();
 
+        // 목록 모양에 따라 메모 사이 간격이 다르다 (줄 목록은 줄이 간격을 대신한다)
+        listStyle = Prefs.listStyle(this);
+        list.setDividerHeight(listStyle == 1 ? 0 : dp(listStyle == 2 ? 6 : 8));
         list.setAdapter(adapter);
 
         findViewById(R.id.save).setOnClickListener(v -> saveInput());
@@ -290,6 +294,7 @@ public class MainActivity extends Activity {
     private void showSettings() {
         String[] items = {"쓸 기능 고르기", "테마 색: " + Prefs.THEME_NAMES[Prefs.theme(this)],
                 "화면 모드: " + Prefs.NIGHT_NAMES[Prefs.night(this)],
+                "목록 모양: " + Prefs.LIST_NAMES[Prefs.listStyle(this)],
                 "내 이모지 규칙", Reminder.label(this), "내보내기 · 백업", "사용법 보기", "의견 보내기"};
         new AlertDialog.Builder(this)
                 .setTitle("설정")
@@ -297,10 +302,11 @@ public class MainActivity extends Activity {
                     if (which == 0) showFeatureDialog();
                     else if (which == 1) showThemeDialog();
                     else if (which == 2) showNightDialog();
-                    else if (which == 3) showRulesDialog();
-                    else if (which == 4) showReminderDialog();
-                    else if (which == 5) showExportMenu();
-                    else if (which == 6) showGuide();
+                    else if (which == 3) showListStyleDialog();
+                    else if (which == 4) showRulesDialog();
+                    else if (which == 5) showReminderDialog();
+                    else if (which == 6) showExportMenu();
+                    else if (which == 7) showGuide();
                     else sendFeedback();
                 })
                 .show();
@@ -436,6 +442,18 @@ public class MainActivity extends Activity {
                 .setTitle("화면 모드")
                 .setSingleChoiceItems(Prefs.NIGHT_NAMES, Prefs.night(this), (d, which) -> {
                     Prefs.setNight(this, which);
+                    d.dismiss();
+                    recreate();
+                })
+                .show();
+    }
+
+    /** 목록 모양: 카드 / 줄 목록 / 말풍선 중에서 고른다. */
+    private void showListStyleDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("목록 모양")
+                .setSingleChoiceItems(Prefs.LIST_NAMES, Prefs.listStyle(this), (d, which) -> {
+                    Prefs.setListStyle(this, which);
                     d.dismiss();
                     recreate();
                 })
@@ -1073,7 +1091,9 @@ public class MainActivity extends Activity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
-                convertView = getLayoutInflater().inflate(R.layout.row_note, parent, false);
+                int layout = listStyle == 1 ? R.layout.row_note_line
+                        : listStyle == 2 ? R.layout.row_note_chat : R.layout.row_note;
+                convertView = getLayoutInflater().inflate(layout, parent, false);
                 ImageView img = convertView.findViewById(R.id.row_photo);
                 img.setClipToOutline(true); // 사진 모서리를 둥글게
             }
@@ -1093,12 +1113,13 @@ public class MainActivity extends Activity {
             text.setText(Tags.highlight(n.text, Ui.tagColor(MainActivity.this), featLinks));
             text.setVisibility(n.text.isEmpty() ? View.GONE : View.VISIBLE);
 
-            // 종이 색(켰을 때만)
+            // 종이 색(켰을 때만). 카드나 말풍선의 바탕에 입힌다. 줄 목록은 바탕이 없어 해당 없음
+            View body = convertView.findViewById(R.id.row_body);
             if (featPaper) {
                 int paper = PAPERS[(int) ((n.time / 1000) % PAPERS.length)];
-                convertView.setBackgroundTintList(ColorStateList.valueOf(getColor(paper)));
+                body.setBackgroundTintList(ColorStateList.valueOf(getColor(paper)));
             } else {
-                convertView.setBackgroundTintList(null);
+                body.setBackgroundTintList(null);
             }
 
             // 내용에 맞는 스티커(켰을 때만)

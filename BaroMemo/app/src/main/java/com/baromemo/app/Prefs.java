@@ -85,6 +85,18 @@ public final class Prefs {
         prefs(ctx).edit().putInt("night", mode).apply();
     }
 
+    /** 목록 모양: 0 카드, 1 줄 목록, 2 말풍선. */
+    public static final String[] LIST_NAMES = {"카드", "줄 목록", "말풍선"};
+
+    public static int listStyle(Context ctx) {
+        int s = prefs(ctx).getInt("list_style", 0);
+        return (s < 0 || s > 2) ? 0 : s;
+    }
+
+    public static void setListStyle(Context ctx, int style) {
+        prefs(ctx).edit().putInt("list_style", style).apply();
+    }
+
     public static int themeStyle(Context ctx) {
         return THEME_STYLES[theme(ctx)];
     }
