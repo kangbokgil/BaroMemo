@@ -175,6 +175,12 @@ public class MainActivity extends Activity {
         });
         attachButton.setOnClickListener(v -> chooseAttachment());
         micButton.setOnClickListener(v -> startDictation());
+        // 도구 줄 접기/펼치기 (고른 상태를 기억한다)
+        findViewById(R.id.fold).setOnClickListener(v -> {
+            Prefs.set(this, "tools_open", !Prefs.on(this, "tools_open"));
+            applyFold();
+        });
+        applyFold();
         // 기분 버튼: 위젯의 기분 기록과 같은 다섯 가지
         final String[] moods = {"😊", "🙂", "😐", "😔", "😢"};
         final int[] moodIds = {R.id.mood1, R.id.mood2, R.id.mood3, R.id.mood4, R.id.mood5};
@@ -784,6 +790,13 @@ public class MainActivity extends Activity {
     }
 
     // ───── 메모 저장 ─────
+
+    /** 입력칸 아래 도구 줄(기분, 태그, 탭, 검색)을 접거나 편다. */
+    private void applyFold() {
+        boolean open = Prefs.on(this, "tools_open");
+        findViewById(R.id.tools_box).setVisibility(open ? View.VISIBLE : View.GONE);
+        ((TextView) findViewById(R.id.fold)).setText(open ? "접기  ▴" : "펼치기  ▾");
+    }
 
     /** 기분 버튼: 기분만, 또는 입력칸에 쓴 글과 함께 바로 저장한다. */
     private void saveMood(String mood) {
