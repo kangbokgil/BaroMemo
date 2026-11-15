@@ -126,6 +126,13 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_e_info" />
         </receiver>
 
+        <!-- "사진 복사"한 사진을 붙여넣는 앱에만 잠깐 읽게 해 준다 -->
+        <provider
+            android:name=".PhotoProvider"
+            android:authorities="com.baromemo.app.photos"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <!-- 위젯의 기분 이모지를 누르면 바로 기록 -->
         <receiver android:name=".MoodReceiver" android:exported="false" />
     </application>
