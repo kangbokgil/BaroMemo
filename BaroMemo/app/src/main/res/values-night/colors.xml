@@ -5,6 +5,7 @@
     <color name="surface">#1E1E1E</color>
     <color name="text">#ECECEC</color>
     <color name="sub">#9A9A9A</color>
+    <color name="line">#2C2C2C</color>
     <color name="p_simple">#EDEDED</color>
     <color name="p_simple_soft">#2E2E31</color>
     <color name="p_simple_on">#111111</color>
