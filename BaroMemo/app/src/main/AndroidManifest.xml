@@ -94,17 +94,39 @@
             </intent-filter>
         </receiver>
 
-        <!-- 홈 화면 위젯 -->
-        <receiver
-            android:name=".NoteWidget"
-            android:exported="true"
-            android:label="바로메모">
+        <!-- 홈 화면 위젯: 다섯 가지 모양 중에서 골라 놓는다 -->
+        <receiver android:name=".NoteWidget" android:exported="true" android:label="바로메모 · 입력바">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/note_widget_info" />
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/note_widget_info" />
         </receiver>
+        <receiver android:name=".WidgetB" android:exported="true" android:label="바로메모 · 버튼 4개">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_b_info" />
+        </receiver>
+        <receiver android:name=".WidgetC" android:exported="true" android:label="바로메모 · 최근 메모">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_c_info" />
+        </receiver>
+        <receiver android:name=".WidgetD" android:exported="true" android:label="바로메모 · 기분 기록">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_d_info" />
+        </receiver>
+        <receiver android:name=".WidgetE" android:exported="true" android:label="바로메모 · 작은 버튼">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_e_info" />
+        </receiver>
+
+        <!-- 위젯의 기분 이모지를 누르면 바로 기록 -->
+        <receiver android:name=".MoodReceiver" android:exported="false" />
     </application>
 </manifest>
