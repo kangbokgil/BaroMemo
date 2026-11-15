@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
         attachButton.setOnClickListener(v -> chooseAttachment());
         micButton.setOnClickListener(v -> startDictation());
         // 기분 버튼: 위젯의 기분 기록과 같은 다섯 가지
-        final String[] moods = {"😊", "🙂", "😐", "😔", "😡"};
+        final String[] moods = {"😊", "🙂", "😐", "😔", "😢"};
         final int[] moodIds = {R.id.mood1, R.id.mood2, R.id.mood3, R.id.mood4, R.id.mood5};
         for (int i = 0; i < moodIds.length; i++) {
             final String mood = moods[i];

@@ -24,7 +24,7 @@ import java.util.Locale;
  *  - WidgetE: 작은 동그라미 버튼
  */
 public class NoteWidget extends AppWidgetProvider {
-    private static final String[] MOODS = {"😊", "🙂", "😐", "😔", "😡"};
+    private static final String[] MOODS = {"😊", "🙂", "😐", "😔", "😢"};
     private static final int[] MOOD_IDS = {R.id.w_e1, R.id.w_e2, R.id.w_e3, R.id.w_e4, R.id.w_e5};
     private static final int[] LINE_IDS = {R.id.w_m1, R.id.w_m2, R.id.w_m3, R.id.w_m4, R.id.w_m5,
             R.id.w_m6, R.id.w_m7, R.id.w_m8, R.id.w_m9, R.id.w_m10};

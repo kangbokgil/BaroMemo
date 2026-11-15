@@ -15,8 +15,10 @@ import java.util.Set;
 
 /** 오늘과 최근 7일의 기분·기록 요약을 글로 만든다. 기분은 메모 맨 앞 이모지로 센다. */
 public final class Summary {
-    // 순서 = 점수 1~5
-    private static final String[] EMO = {"😡", "😔", "😐", "🙂", "😊"};
+    // 순서 = 점수 1~5. 가장 낮은 단계는 "화남"이 아니라 "아주 안 좋음"(슬픔·화남 모두)이라 😢를 쓴다
+    private static final String[] EMO = {"😢", "😔", "😐", "🙂", "😊"};
+    /** 예전 버전에서 가장 낮은 단계로 저장하던 이모지. 이미 저장된 메모도 그대로 1점으로 센다. */
+    private static final String OLD_LOWEST = "😡";
 
     private Summary() {}
 
@@ -25,6 +27,7 @@ public final class Summary {
         for (int i = 0; i < EMO.length; i++) {
             if (text.startsWith(EMO[i])) return i + 1;
         }
+        if (text.startsWith(OLD_LOWEST)) return 1;
         return 0;
     }
 
