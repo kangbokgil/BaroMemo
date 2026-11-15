@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="QuickTheme" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar" />
+    <style name="QuickTheme" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
+        <item name="android:colorAccent">@color/accent</item>
+    </style>
 </resources>

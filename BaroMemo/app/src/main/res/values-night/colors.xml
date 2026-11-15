@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent_soft">#4A2A20</color>
+    <color name="bg">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="text">#ECECEC</color>
+    <color name="sub">#9A9A9A</color>
+    <color name="paper1">#2A241C</color>
+    <color name="paper2">#2B1F23</color>
+    <color name="paper3">#1D2720</color>
+    <color name="paper4">#1D2330</color>
+    <color name="paper5">#261F2D</color>
+</resources>
