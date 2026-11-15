@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 위젯 D: 입력바 + 기분 다섯 개 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -6,35 +7,92 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <TextView
-        android:id="@+id/w_input"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:background="@drawable/widget_chip"
         android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingStart="14dp"
-        android:paddingEnd="14dp"
-        android:text="✏️  바로 메모하기"
-        android:textColor="@color/sub"
-        android:textSize="14sp" />
+        android:paddingEnd="14dp">
+
+        <LinearLayout
+            android:id="@+id/w_input"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_w_pen"
+                android:tint="@color/sub" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="바로 메모하기"
+                android:textColor="@color/sub"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="center_vertical"
+        android:gravity="center"
         android:orientation="horizontal"
         android:paddingTop="6dp">
 
-        <TextView android:id="@+id/w_e1" android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:gravity="center" android:text="😊" android:textSize="24sp" />
-        <TextView android:id="@+id/w_e2" android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:gravity="center" android:text="🙂" android:textSize="24sp" />
-        <TextView android:id="@+id/w_e3" android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:gravity="center" android:text="😐" android:textSize="24sp" />
-        <TextView android:id="@+id/w_e4" android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:gravity="center" android:text="😔" android:textSize="24sp" />
-        <TextView android:id="@+id/w_e5" android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:gravity="center" android:text="😡" android:textSize="24sp" />
+        <ImageView
+            android:id="@+id/w_e1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_face1"
+            android:contentDescription="아주 좋음" />
+        <ImageView
+            android:id="@+id/w_e2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_face2"
+            android:contentDescription="좋음" />
+        <ImageView
+            android:id="@+id/w_e3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_face3"
+            android:contentDescription="보통" />
+        <ImageView
+            android:id="@+id/w_e4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_face4"
+            android:contentDescription="안 좋음" />
+        <ImageView
+            android:id="@+id/w_e5"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_face5"
+            android:contentDescription="아주 안 좋음" />
     </LinearLayout>
 </LinearLayout>

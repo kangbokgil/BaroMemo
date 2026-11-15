@@ -13,25 +13,41 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="14dp"
-        android:paddingEnd="4dp">
+        android:paddingEnd="2dp">
 
-        <TextView
+        <LinearLayout
             android:id="@+id/w_input"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center_vertical"
-            android:text="✏️  바로 메모하기"
-            android:textColor="@color/sub"
-            android:textSize="14sp" />
+            android:orientation="horizontal">
 
-        <TextView
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_w_pen"
+                android:tint="@color/sub" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="바로 메모하기"
+                android:textColor="@color/sub"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <ImageView
             android:id="@+id/w_voice"
             android:layout_width="40dp"
             android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="🎤"
-            android:textSize="17sp" />
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_mic"
+            android:contentDescription="말로 쓰기"
+            android:tint="@color/sub" />
     </LinearLayout>
 
     <LinearLayout

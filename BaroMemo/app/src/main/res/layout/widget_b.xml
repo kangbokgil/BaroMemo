@@ -1,23 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 위젯 B: 버튼 네 개 (글 / 말 / 사진 / 그림) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingStart="6dp"
-    android:paddingEnd="6dp">
+    android:padding="5dp">
 
-    <TextView android:id="@+id/w_input" android:layout_width="0dp" android:layout_height="match_parent"
-        android:layout_weight="1" android:gravity="center" android:lineSpacingExtra="2dp"
-        android:text="✏️\n글" android:textColor="@color/sub" android:textSize="13sp" />
-    <TextView android:id="@+id/w_voice" android:layout_width="0dp" android:layout_height="match_parent"
-        android:layout_weight="1" android:gravity="center" android:lineSpacingExtra="2dp"
-        android:text="🎤\n말" android:textColor="@color/sub" android:textSize="13sp" />
-    <TextView android:id="@+id/w_photo" android:layout_width="0dp" android:layout_height="match_parent"
-        android:layout_weight="1" android:gravity="center" android:lineSpacingExtra="2dp"
-        android:text="📷\n사진" android:textColor="@color/sub" android:textSize="13sp" />
-    <TextView android:id="@+id/w_draw" android:layout_width="0dp" android:layout_height="match_parent"
-        android:layout_weight="1" android:gravity="center" android:lineSpacingExtra="2dp"
-        android:text="🖌️\n그림" android:textColor="@color/sub" android:textSize="13sp" />
+    <LinearLayout
+        android:id="@+id/w_input"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_margin="3dp"
+        android:layout_weight="1"
+        android:background="@drawable/widget_chip"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_pen" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="글"
+            android:textColor="@color/sub"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/w_voice"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_margin="3dp"
+        android:layout_weight="1"
+        android:background="@drawable/widget_chip"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_mic" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="말"
+            android:textColor="@color/sub"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/w_photo"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_margin="3dp"
+        android:layout_weight="1"
+        android:background="@drawable/widget_chip"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_cam" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="사진"
+            android:textColor="@color/sub"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/w_draw"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_margin="3dp"
+        android:layout_weight="1"
+        android:background="@drawable/widget_chip"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_brush" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="그림"
+            android:textColor="@color/sub"
+            android:textSize="11sp" />
+    </LinearLayout>
 </LinearLayout>
