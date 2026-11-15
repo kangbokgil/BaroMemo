@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,7 +29,7 @@ public class QuickInputActivity extends Activity {
         setFinishOnTouchOutside(true);
 
         input = findViewById(R.id.quick_input);
-        Button save = findViewById(R.id.quick_save);
+        TextView save = findViewById(R.id.quick_save);
         save.setOnClickListener(v -> saveAndClose(null));
         input.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {

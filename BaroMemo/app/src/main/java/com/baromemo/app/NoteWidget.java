@@ -24,7 +24,13 @@ public class NoteWidget extends AppWidgetProvider {
         if (ids == null || ids.length == 0) return;
 
         List<Note> notes = NoteStore.load(ctx);
-        String last = notes.isEmpty() ? "아직 메모가 없어요" : "최근: " + notes.get(0).text;
+        String last;
+        if (notes.isEmpty()) {
+            last = "아직 메모가 없어요";
+        } else {
+            Note n = notes.get(0);
+            last = "최근: " + (n.photo != null ? "📷 " : "") + n.text;
+        }
 
         Intent quick = new Intent(ctx, QuickInputActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

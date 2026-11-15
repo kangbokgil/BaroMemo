@@ -4,33 +4,70 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.TimePickerDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.LruCache;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/** 앱 아이콘으로 열면: 위에 입력칸, 아래에 지금까지 메모 목록. */
+/** 앱 화면: 위에 입력칸, 아래에 목록 / 달력 / 요약 탭. */
 public class MainActivity extends Activity {
     private static final int REQ_NOTIFICATION = 1;
+    private static final int REQ_PHOTO = 2;
+    private static final int MODE_LIST = 0;
+    private static final int MODE_CALENDAR = 1;
+    private static final int MODE_SUMMARY = 2;
+    private static final int[] PAPERS = {
+            R.color.paper1, R.color.paper2, R.color.paper3, R.color.paper4, R.color.paper5
+    };
+    private static final String[] WEEKDAYS = {"일", "월", "화", "수", "목", "금", "토"};
 
     private EditText input;
     private EditText search;
     private TextView empty;
-    private Button reminder;
-    private ArrayAdapter<String> adapter;
+    private TextView reminder;
+    private TextView tabList;
+    private TextView tabCalendar;
+    private TextView tabSummary;
+    private View calendarPane;
+    private TextView calTitle;
+    private LinearLayout calGrid;
+    private TextView dayTitle;
+    private ListView list;
+    private View summaryPane;
+    private TextView summaryText;
+
     private final List<Note> shown = new ArrayList<>();
+    private final NoteAdapter adapter = new NoteAdapter();
+    private int mode = MODE_LIST;
+    private Calendar month;      // 보고 있는 달의 1일 0시
+    private long selectedDay;    // 달력에서 고른 날의 0시
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,14 +78,26 @@ public class MainActivity extends Activity {
         search = findViewById(R.id.search);
         empty = findViewById(R.id.empty);
         reminder = findViewById(R.id.reminder);
-        Button save = findViewById(R.id.save);
-        Button share = findViewById(R.id.share);
-        ListView list = findViewById(R.id.list);
+        tabList = findViewById(R.id.tab_list);
+        tabCalendar = findViewById(R.id.tab_calendar);
+        tabSummary = findViewById(R.id.tab_summary);
+        calendarPane = findViewById(R.id.calendar_pane);
+        calTitle = findViewById(R.id.cal_title);
+        calGrid = findViewById(R.id.cal_grid);
+        dayTitle = findViewById(R.id.day_title);
+        list = findViewById(R.id.list);
+        summaryPane = findViewById(R.id.summary_pane);
+        summaryText = findViewById(R.id.summary_text);
 
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
+        selectedDay = startOfDay(System.currentTimeMillis());
+        month = Calendar.getInstance();
+        month.setTimeInMillis(selectedDay);
+        month.set(Calendar.DAY_OF_MONTH, 1);
+
         list.setAdapter(adapter);
 
-        save.setOnClickListener(v -> saveInput());
+        findViewById(R.id.save).setOnClickListener(v -> saveInput());
+        findViewById(R.id.photo).setOnClickListener(v -> pickPhoto());
         input.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 saveInput();
@@ -63,6 +112,30 @@ public class MainActivity extends Activity {
             @Override public void afterTextChanged(Editable s) { refresh(); }
         });
 
+        tabList.setOnClickListener(v -> setMode(MODE_LIST));
+        tabCalendar.setOnClickListener(v -> setMode(MODE_CALENDAR));
+        tabSummary.setOnClickListener(v -> setMode(MODE_SUMMARY));
+
+        findViewById(R.id.cal_prev).setOnClickListener(v -> {
+            month.add(Calendar.MONTH, -1);
+            refresh();
+        });
+        findViewById(R.id.cal_next).setOnClickListener(v -> {
+            month.add(Calendar.MONTH, 1);
+            refresh();
+        });
+
+        // 요일 줄
+        LinearLayout weekdays = findViewById(R.id.cal_weekdays);
+        for (String w : WEEKDAYS) {
+            TextView t = new TextView(this);
+            t.setText(w);
+            t.setGravity(Gravity.CENTER);
+            t.setTextSize(11);
+            t.setTextColor(getColor(R.color.sub));
+            weekdays.addView(t, new LinearLayout.LayoutParams(0, dp(24), 1f));
+        }
+
         // 누르면 수정, 길게 누르면 삭제
         list.setOnItemClickListener((parent, view, position, id) -> editNote(shown.get(position)));
         list.setOnItemLongClickListener((parent, view, position, id) -> {
@@ -70,7 +143,7 @@ public class MainActivity extends Activity {
             return true;
         });
 
-        share.setOnClickListener(v -> {
+        findViewById(R.id.share).setOnClickListener(v -> {
             Intent send = new Intent(Intent.ACTION_SEND)
                     .setType("text/plain")
                     .putExtra(Intent.EXTRA_TEXT, NoteStore.exportText(this));
@@ -87,6 +160,7 @@ public class MainActivity extends Activity {
             NotificationHelper.show(this, null);
         }
         Reminder.schedule(this);
+        setMode(MODE_LIST);
     }
 
     @Override
@@ -100,8 +174,167 @@ public class MainActivity extends Activity {
         super.onResume();
         refresh();
         reminder.setText(Reminder.label(this));
-        input.requestFocus();
+        if (mode == MODE_LIST) input.requestFocus();
     }
+
+    // ───── 탭 ─────
+
+    private void setMode(int newMode) {
+        mode = newMode;
+        styleTab(tabList, mode == MODE_LIST);
+        styleTab(tabCalendar, mode == MODE_CALENDAR);
+        styleTab(tabSummary, mode == MODE_SUMMARY);
+        search.setVisibility(mode == MODE_LIST ? View.VISIBLE : View.GONE);
+        calendarPane.setVisibility(mode == MODE_CALENDAR ? View.VISIBLE : View.GONE);
+        dayTitle.setVisibility(mode == MODE_CALENDAR ? View.VISIBLE : View.GONE);
+        list.setVisibility(mode == MODE_SUMMARY ? View.GONE : View.VISIBLE);
+        summaryPane.setVisibility(mode == MODE_SUMMARY ? View.VISIBLE : View.GONE);
+        if (mode != MODE_LIST) hideKeyboard();
+        refresh();
+    }
+
+    private void styleTab(TextView tab, boolean on) {
+        tab.setBackgroundResource(on ? R.drawable.bg_tab_selected : 0);
+        tab.setTextColor(getColor(on ? R.color.accent : R.color.sub));
+        tab.setTypeface(null, on ? Typeface.BOLD : Typeface.NORMAL);
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = getSystemService(InputMethodManager.class);
+        if (imm != null) imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+        input.clearFocus();
+    }
+
+    // ───── 화면 갱신 ─────
+
+    private void refresh() {
+        List<Note> all = NoteStore.load(this); // 최신이 앞
+        shown.clear();
+        String emptyMessage = null;
+
+        if (mode == MODE_LIST) {
+            String q = search.getText().toString().trim().toLowerCase(Locale.KOREA);
+            for (Note n : all) {
+                if (q.isEmpty() || n.text.toLowerCase(Locale.KOREA).contains(q)) shown.add(n);
+            }
+            if (all.isEmpty()) {
+                emptyMessage = "아직 메모가 없어요.\n위젯이나 알림창에서 바로 적어 보세요.";
+            } else if (shown.isEmpty()) {
+                emptyMessage = "검색 결과가 없어요.";
+            }
+        } else if (mode == MODE_CALENDAR) {
+            buildCalendar(all);
+            long end = selectedDay + 24L * 60 * 60 * 1000;
+            for (Note n : all) {
+                if (n.time >= selectedDay && n.time < end) shown.add(n);
+            }
+            Collections.reverse(shown); // 하루 안에서는 시간순
+            String day = new SimpleDateFormat("M월 d일 (E)", Locale.KOREA).format(new Date(selectedDay));
+            dayTitle.setText(day + " · 기록 " + shown.size() + "개");
+            if (shown.isEmpty()) emptyMessage = "이 날은 기록이 없어요.";
+        } else {
+            summaryText.setText(Summary.build(this));
+        }
+
+        adapter.notifyDataSetChanged();
+        if (emptyMessage != null) {
+            empty.setText(emptyMessage);
+            empty.setVisibility(View.VISIBLE);
+        } else {
+            empty.setVisibility(View.GONE);
+        }
+    }
+
+    // ───── 달력 ─────
+
+    private void buildCalendar(List<Note> all) {
+        int year = month.get(Calendar.YEAR);
+        int monthIndex = month.get(Calendar.MONTH);
+        calTitle.setText(String.format(Locale.KOREA, "%d년 %d월", year, monthIndex + 1));
+
+        int days = month.getActualMaximum(Calendar.DAY_OF_MONTH);
+        int firstDow = month.get(Calendar.DAY_OF_WEEK) - 1; // 일요일 = 0
+
+        // 날짜별 기록 수와 기분 점수
+        int[] count = new int[days + 1];
+        int[] sum = new int[days + 1];
+        int[] moods = new int[days + 1];
+        long monthStart = month.getTimeInMillis();
+        Calendar next = (Calendar) month.clone();
+        next.add(Calendar.MONTH, 1);
+        long monthEnd = next.getTimeInMillis();
+        Calendar tmp = Calendar.getInstance();
+        for (Note n : all) {
+            if (n.time < monthStart || n.time >= monthEnd) continue;
+            tmp.setTimeInMillis(n.time);
+            int d = tmp.get(Calendar.DAY_OF_MONTH);
+            count[d]++;
+            int s = Summary.score(n.text);
+            if (s > 0) {
+                sum[d] += s;
+                moods[d]++;
+            }
+        }
+
+        long today = startOfDay(System.currentTimeMillis());
+        int rows = (firstDow + days + 6) / 7;
+        int day = 1 - firstDow;
+        calGrid.removeAllViews();
+        for (int r = 0; r < rows; r++) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            for (int col = 0; col < 7; col++, day++) {
+                TextView cell = new TextView(this);
+                cell.setGravity(Gravity.CENTER);
+                cell.setTextSize(12);
+                if (day >= 1 && day <= days) {
+                    Calendar dc = (Calendar) month.clone();
+                    dc.set(Calendar.DAY_OF_MONTH, day);
+                    final long dayStart = dc.getTimeInMillis();
+
+                    String mark;
+                    if (moods[day] > 0) {
+                        mark = Summary.face((double) sum[day] / moods[day]);
+                    } else if (count[day] > 0) {
+                        mark = "•";
+                    } else {
+                        mark = " ";
+                    }
+                    cell.setText(day + "\n" + mark);
+
+                    boolean isToday = dayStart == today;
+                    cell.setTextColor(getColor(isToday ? R.color.accent : R.color.text));
+                    cell.setTypeface(null, isToday ? Typeface.BOLD : Typeface.NORMAL);
+                    if (dayStart == selectedDay) {
+                        cell.setBackgroundResource(R.drawable.bg_cell_selected);
+                    }
+                    cell.setOnClickListener(v -> {
+                        selectedDay = dayStart;
+                        refresh();
+                    });
+                }
+                row.addView(cell, new LinearLayout.LayoutParams(0, dp(46), 1f));
+            }
+            calGrid.addView(row, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+    }
+
+    private static long startOfDay(long time) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(time);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    // ───── 메모 저장·수정·삭제 ─────
 
     private void saveInput() {
         if (NoteStore.add(this, input.getText())) {
@@ -110,13 +343,57 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** 갤러리에서 사진을 골라, 입력칸의 글과 함께 메모로 저장한다. */
+    private void pickPhoto() {
+        Intent pick = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*");
+        try {
+            startActivityForResult(pick, REQ_PHOTO);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "사진을 고를 수 있는 앱이 없어요", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQ_PHOTO || resultCode != RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        String name = NoteStore.importPhoto(this, data.getData());
+        if (name == null) {
+            Toast.makeText(this, "사진을 불러오지 못했어요", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        NoteStore.add(this, input.getText(), name);
+        input.setText("");
+        refresh();
+    }
+
     private void editNote(final Note target) {
         final EditText et = new EditText(this);
         et.setText(target.text);
         et.setSelection(et.length());
+
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(20), dp(8), dp(20), 0);
+        if (target.photo != null) {
+            Bitmap bmp = NoteStore.loadPhoto(this, target.photo, 1);
+            if (bmp != null) {
+                ImageView iv = new ImageView(this);
+                iv.setImageBitmap(bmp);
+                iv.setAdjustViewBounds(true);
+                iv.setMaxHeight(dp(320));
+                box.addView(iv, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            }
+        }
+        box.addView(et, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
         new AlertDialog.Builder(this)
-                .setTitle("메모 수정")
-                .setView(et)
+                .setTitle(target.photo != null ? "메모 보기·수정" : "메모 수정")
+                .setView(box)
                 .setPositiveButton("저장", (d, w) -> {
                     NoteStore.update(this, target.time, et.getText());
                     refresh();
@@ -128,7 +405,7 @@ public class MainActivity extends Activity {
 
     private void confirmDelete(final Note target) {
         new AlertDialog.Builder(this)
-                .setMessage("이 메모를 삭제할까요?\n\n" + target.text)
+                .setMessage("이 메모를 삭제할까요?\n\n" + (target.photo != null ? "📷 " : "") + target.text)
                 .setPositiveButton("삭제", (d, w) -> {
                     NoteStore.delete(this, target.time);
                     refresh();
@@ -136,6 +413,8 @@ public class MainActivity extends Activity {
                 .setNegativeButton("취소", null)
                 .show();
     }
+
+    // ───── 기록 알림 ─────
 
     private void onReminderClick() {
         if (!Reminder.isOn(this)) {
@@ -161,27 +440,61 @@ public class MainActivity extends Activity {
         }, Reminder.hour(this), Reminder.minute(this), true).show();
     }
 
-    private void refresh() {
-        String q = search.getText().toString().trim().toLowerCase(Locale.KOREA);
-        List<Note> all = NoteStore.load(this);
-        shown.clear();
-        List<String> rows = new ArrayList<>();
-        for (Note n : all) {
-            if (!q.isEmpty() && !n.text.toLowerCase(Locale.KOREA).contains(q)) continue;
-            shown.add(n);
-            rows.add(NoteStore.shortTime(n.time) + "\n" + n.text);
-        }
-        adapter.clear();
-        adapter.addAll(rows);
-        adapter.notifyDataSetChanged();
-        if (all.isEmpty()) {
-            empty.setText("아직 메모가 없어요.\n위젯이나 알림창에서 바로 적어 보세요.");
-            empty.setVisibility(TextView.VISIBLE);
-        } else if (shown.isEmpty()) {
-            empty.setText("검색 결과가 없어요.");
-            empty.setVisibility(TextView.VISIBLE);
-        } else {
-            empty.setVisibility(TextView.GONE);
+    // ───── 목록 한 줄 ─────
+
+    private class NoteAdapter extends BaseAdapter {
+        private final SimpleDateFormat timeOnly = new SimpleDateFormat("HH:mm", Locale.KOREA);
+        private final LruCache<String, Bitmap> thumbs = new LruCache<>(12);
+
+        @Override public int getCount() { return shown.size(); }
+        @Override public Object getItem(int position) { return shown.get(position); }
+        @Override public long getItemId(int position) { return shown.get(position).time; }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = getLayoutInflater().inflate(R.layout.row_note, parent, false);
+            }
+            Note n = shown.get(position);
+            TextView time = convertView.findViewById(R.id.row_time);
+            TextView text = convertView.findViewById(R.id.row_text);
+            time.setText(mode == MODE_CALENDAR
+                    ? timeOnly.format(new Date(n.time))
+                    : NoteStore.shortTime(n.time));
+            text.setText(n.text);
+            text.setVisibility(n.text.isEmpty() ? View.GONE : View.VISIBLE);
+
+            // 다이어리 느낌: 메모마다 종이 색을 달리하고, 내용에 맞는 스티커를 붙인다
+            int paper = PAPERS[(int) ((n.time / 1000) % PAPERS.length)];
+            convertView.setBackgroundTintList(ColorStateList.valueOf(getColor(paper)));
+            TextView sticker = convertView.findViewById(R.id.row_sticker);
+            String emoji = Sticker.pick(n.text);
+            if (emoji != null) {
+                sticker.setText(emoji);
+                sticker.setRotation((n.time / 1000) % 2 == 0 ? -8f : 8f);
+                sticker.setVisibility(View.VISIBLE);
+            } else {
+                sticker.setVisibility(View.GONE);
+            }
+
+            ImageView photo = convertView.findViewById(R.id.row_photo);
+            Bitmap bmp = null;
+            if (n.photo != null) {
+                bmp = thumbs.get(n.photo);
+                if (bmp == null) {
+                    bmp = NoteStore.loadPhoto(MainActivity.this, n.photo, 2);
+                    if (bmp != null) thumbs.put(n.photo, bmp);
+                }
+            }
+            if (bmp != null) {
+                photo.setImageBitmap(bmp);
+                photo.setRotation((n.time / 1000) % 2 == 0 ? 1.5f : -1.5f);
+                photo.setVisibility(View.VISIBLE);
+            } else {
+                photo.setImageDrawable(null);
+                photo.setVisibility(View.GONE);
+            }
+            return convertView;
         }
     }
 }
