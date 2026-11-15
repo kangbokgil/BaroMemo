@@ -8,7 +8,10 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /** 오늘과 최근 7일의 기분·기록 요약을 글로 만든다. 기분은 메모 맨 앞 이모지로 센다. */
 public final class Summary {
@@ -116,6 +119,48 @@ public final class Summary {
             }
             sb.append("  · 기록 ").append(total).append("개\n");
         }
+
+        // 해시태그
+        List<Map.Entry<String, Integer>> tags = Tags.counts(notes);
+        if (!tags.isEmpty()) {
+            sb.append("\n■ 자주 쓴 해시태그\n");
+            for (int i = 0; i < tags.size() && i < 10; i++) {
+                sb.append(tags.get(i).getKey()).append("  ").append(tags.get(i).getValue()).append("번\n");
+            }
+        }
         return sb.toString();
+    }
+
+    /** 하루치 메모의 짧은 요약: 기록 수, 평균 기분, 기분별 횟수, 그날 쓴 해시태그. */
+    public static String day(List<Note> dayNotes) {
+        if (dayNotes.isEmpty()) return "기록 없음";
+        int[] count = new int[EMO.length];
+        int sum = 0;
+        int moods = 0;
+        Set<String> tags = new LinkedHashSet<>();
+        for (Note n : dayNotes) {
+            int s = score(n.text);
+            if (s > 0) {
+                count[s - 1]++;
+                sum += s;
+                moods++;
+            }
+            tags.addAll(Tags.extract(n.text));
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("기록 ").append(dayNotes.size()).append("개");
+        if (moods > 0) {
+            double avg = (double) sum / moods;
+            sb.append(String.format(Locale.KOREA, " · 평균 기분 %s %.1f", face(avg), avg));
+            sb.append('\n');
+            for (int i = EMO.length - 1; i >= 0; i--) {
+                if (count[i] > 0) sb.append(EMO[i]).append(' ').append(count[i]).append("번  ");
+            }
+        }
+        if (!tags.isEmpty()) {
+            sb.append('\n');
+            for (String t : tags) sb.append(t).append(' ');
+        }
+        return sb.toString().trim();
     }
 }

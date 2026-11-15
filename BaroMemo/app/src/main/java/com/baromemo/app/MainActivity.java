@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /** 앱 화면: 위에 입력칸, 아래에 목록 / 달력 / 요약 탭. */
@@ -79,6 +80,10 @@ public class MainActivity extends Activity {
 
     private final List<Note> shown = new ArrayList<>();
     private final Set<Long> selected = new HashSet<>(); // 선택 모드에서 고른 메모(시간 값)
+    private boolean calCollapsed;                        // 달력을 접어 하루 화면으로 볼지
+    private View calWeekdays;
+    private View tagScroll;
+    private LinearLayout tagRow;
     private Uri cameraUri;                               // 사진 찍기 결과가 저장될 곳
     private final NoteAdapter adapter = new NoteAdapter();
     private int mode = MODE_LIST;
@@ -107,6 +112,9 @@ public class MainActivity extends Activity {
         bottomBar = findViewById(R.id.bottom_bar);
         selectBar = findViewById(R.id.select_bar);
         selCount = findViewById(R.id.sel_count);
+        calWeekdays = findViewById(R.id.cal_weekdays);
+        tagScroll = findViewById(R.id.tag_scroll);
+        tagRow = findViewById(R.id.tag_row);
         if (savedInstanceState != null) {
             cameraUri = savedInstanceState.getParcelable("cameraUri");
         }
@@ -150,12 +158,13 @@ public class MainActivity extends Activity {
         tabCalendar.setOnClickListener(v -> setMode(MODE_CALENDAR));
         tabSummary.setOnClickListener(v -> setMode(MODE_SUMMARY));
 
-        findViewById(R.id.cal_prev).setOnClickListener(v -> {
-            month.add(Calendar.MONTH, -1);
-            refresh();
-        });
-        findViewById(R.id.cal_next).setOnClickListener(v -> {
-            month.add(Calendar.MONTH, 1);
+        // 펼친 상태에서는 달, 접은 상태에서는 하루씩 이동
+        findViewById(R.id.cal_prev).setOnClickListener(v -> moveCalendar(-1));
+        findViewById(R.id.cal_next).setOnClickListener(v -> moveCalendar(1));
+        // 제목을 누르면 달력을 접거나 편다
+        calTitle.setOnClickListener(v -> {
+            calCollapsed = !calCollapsed;
+            syncMonthToSelectedDay();
             refresh();
         });
 
@@ -288,12 +297,13 @@ public class MainActivity extends Activity {
             }
             Collections.reverse(shown); // 하루 안에서는 시간순
             String day = new SimpleDateFormat("M월 d일 (E)", Locale.KOREA).format(new Date(selectedDay));
-            dayTitle.setText(day + " · 기록 " + shown.size() + "개");
+            dayTitle.setText(day + "\n" + Summary.day(shown));
             if (shown.isEmpty()) emptyMessage = "이 날은 기록이 없어요.";
         } else {
             summaryText.setText(Summary.build(this));
         }
 
+        buildTagChips(all);
         adapter.notifyDataSetChanged();
         if (emptyMessage != null) {
             empty.setText(emptyMessage);
@@ -303,12 +313,68 @@ public class MainActivity extends Activity {
         }
     }
 
+    // ───── 해시태그 ─────
+
+    /** 목록 탭 위쪽에 많이 쓴 해시태그를 버튼으로 보여 준다. 누르면 그 태그만 모아 본다. */
+    private void buildTagChips(List<Note> all) {
+        tagRow.removeAllViews();
+        List<Map.Entry<String, Integer>> tags = Tags.counts(all);
+        if (mode != MODE_LIST || tags.isEmpty()) {
+            tagScroll.setVisibility(View.GONE);
+            return;
+        }
+        tagScroll.setVisibility(View.VISIBLE);
+        String current = search.getText().toString().trim();
+        for (int i = 0; i < tags.size() && i < 15; i++) {
+            final String tag = tags.get(i).getKey();
+            boolean on = tag.equals(current);
+            TextView chip = new TextView(this);
+            chip.setText(tag);
+            chip.setTextSize(13);
+            chip.setGravity(Gravity.CENTER);
+            chip.setPadding(dp(14), 0, dp(14), 0);
+            chip.setBackgroundResource(on ? R.drawable.bg_tab_selected : R.drawable.bg_card);
+            chip.setTextColor(getColor(on ? R.color.accent : R.color.sub));
+            chip.setOnClickListener(v -> search.setText(tag.equals(search.getText().toString().trim()) ? "" : tag));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, dp(34));
+            lp.setMarginEnd(dp(8));
+            tagRow.addView(chip, lp);
+        }
+    }
+
     // ───── 달력 ─────
 
+    private void moveCalendar(int step) {
+        if (calCollapsed) {
+            Calendar c = Calendar.getInstance();
+            c.setTimeInMillis(selectedDay);
+            c.add(Calendar.DAY_OF_MONTH, step);
+            selectedDay = c.getTimeInMillis();
+            syncMonthToSelectedDay();
+        } else {
+            month.add(Calendar.MONTH, step);
+        }
+        refresh();
+    }
+
+    private void syncMonthToSelectedDay() {
+        month.setTimeInMillis(selectedDay);
+        month.set(Calendar.DAY_OF_MONTH, 1);
+    }
+
     private void buildCalendar(List<Note> all) {
+        calWeekdays.setVisibility(calCollapsed ? View.GONE : View.VISIBLE);
+        calGrid.setVisibility(calCollapsed ? View.GONE : View.VISIBLE);
+        if (calCollapsed) {
+            // 접은 상태: 고른 날짜만 한 줄로
+            String day = new SimpleDateFormat("M월 d일 (E)", Locale.KOREA).format(new Date(selectedDay));
+            calTitle.setText(day + "  ▾");
+            return;
+        }
         int year = month.get(Calendar.YEAR);
         int monthIndex = month.get(Calendar.MONTH);
-        calTitle.setText(String.format(Locale.KOREA, "%d년 %d월", year, monthIndex + 1));
+        calTitle.setText(String.format(Locale.KOREA, "%d년 %d월  ▴", year, monthIndex + 1));
 
         int days = month.getActualMaximum(Calendar.DAY_OF_MONTH);
         int firstDow = month.get(Calendar.DAY_OF_WEEK) - 1; // 일요일 = 0
@@ -366,8 +432,10 @@ public class MainActivity extends Activity {
                     if (dayStart == selectedDay) {
                         cell.setBackgroundResource(R.drawable.bg_cell_selected);
                     }
+                    // 날짜를 누르면 달력을 접고 그날 화면으로 넘어간다
                     cell.setOnClickListener(v -> {
                         selectedDay = dayStart;
+                        calCollapsed = true;
                         refresh();
                     });
                 }
@@ -676,7 +744,7 @@ public class MainActivity extends Activity {
             time.setText(picked ? "✓ " + when : when);
             time.setTextColor(getColor(picked ? R.color.accent : R.color.sub));
             time.setTypeface(null, picked ? Typeface.BOLD : Typeface.NORMAL);
-            text.setText(n.text);
+            text.setText(Tags.highlight(n.text, getColor(R.color.accent)));
             text.setVisibility(n.text.isEmpty() ? View.GONE : View.VISIBLE);
 
             // 다이어리 느낌: 메모마다 종이 색을 달리하고, 내용에 맞는 스티커를 붙인다
