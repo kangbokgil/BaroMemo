@@ -110,6 +110,72 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- 기분 한 번에 기록: 누르면 그 기분이 바로 저장된다 (입력칸에 쓴 글이 있으면 같이) -->
+        <LinearLayout
+            android:id="@+id/mood_row"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/mood1"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:contentDescription="기분: 아주 좋음"
+                android:focusable="true"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_w_face1" />
+            <ImageView
+                android:id="@+id/mood2"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:contentDescription="기분: 좋음"
+                android:focusable="true"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_w_face2" />
+            <ImageView
+                android:id="@+id/mood3"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:contentDescription="기분: 보통"
+                android:focusable="true"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_w_face3" />
+            <ImageView
+                android:id="@+id/mood4"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:contentDescription="기분: 안 좋음"
+                android:focusable="true"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_w_face4" />
+            <ImageView
+                android:id="@+id/mood5"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:contentDescription="기분: 아주 안 좋음"
+                android:focusable="true"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_w_face5" />
+        </LinearLayout>
+
         <!-- 입력칸에 바로 붙이는 태그 버튼 -->
         <HorizontalScrollView
             android:id="@+id/input_tag_scroll"
