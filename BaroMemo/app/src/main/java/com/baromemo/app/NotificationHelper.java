@@ -87,7 +87,9 @@ public final class NotificationHelper {
 
         // 알림 본문을 누르면 앱(목록 화면)이 열린다
         Intent appIntent = new Intent(ctx, MainActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                .putExtra(MainActivity.EXTRA_VIEW_ONLY, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent appPi = PendingIntent.getActivity(ctx, 10, appIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 

@@ -68,7 +68,10 @@ public class NoteWidget extends AppWidgetProvider {
         v.setOnClickPendingIntent(R.id.w_attach, capture(ctx, 22, CaptureActivity.MODE_ATTACH));
         v.setOnClickPendingIntent(R.id.w_photo, capture(ctx, 23, CaptureActivity.MODE_PHOTO));
         v.setOnClickPendingIntent(R.id.w_draw, activity(ctx, 24, new Intent(ctx, DrawActivity.class)));
-        v.setOnClickPendingIntent(R.id.w_list, activity(ctx, 25, new Intent(ctx, MainActivity.class)));
+        // 최근 메모를 누르면 목록을 "보러" 들어간다: 키보드를 띄우지 않고, 화면을 겹쳐 쌓지 않는다
+        v.setOnClickPendingIntent(R.id.w_list, activity(ctx, 25, new Intent(ctx, MainActivity.class)
+                .putExtra(MainActivity.EXTRA_VIEW_ONLY, true)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)));
 
         // 기분: 누르면 화면 전환 없이 바로 기록
         for (int i = 0; i < MOODS.length; i++) {

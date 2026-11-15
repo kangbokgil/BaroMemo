@@ -48,6 +48,11 @@ import java.util.Set;
 
 /** 앱 화면: 위에 입력칸, 아래에 목록 / 달력 / 요약 탭. 설정(⚙)에서 쓸 기능과 테마를 고른다. */
 public class MainActivity extends Activity {
+    /** 위젯의 메모 목록이나 알림 본문을 눌러 "보러" 들어왔을 때: 키보드를 띄우지 않는다. */
+    public static final String EXTRA_VIEW_ONLY = "view_only";
+    private static final int MAX_PHOTOS_AT_ONCE = 10;
+    private boolean viewOnly;
+
     private static final int REQ_NOTIFICATION = 1;
     private static final int REQ_PHOTO = 2;
     private static final int REQ_CAMERA = 3;
@@ -116,6 +121,11 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         Ui.applyPalette(this);
         super.onCreate(savedInstanceState);
+        viewOnly = savedInstanceState == null && getIntent().getBooleanExtra(EXTRA_VIEW_ONLY, false);
+        if (viewOnly) {
+            getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
+                    | android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
         setContentView(R.layout.activity_main);
 
         input = findViewById(R.id.input);
@@ -249,7 +259,29 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         refresh();
-        if (mode == MODE_LIST) input.requestFocus();
+        if (mode == MODE_LIST && !viewOnly) input.requestFocus();
+    }
+
+    /** 이미 열려 있는 화면으로 다시 들어온 경우 (화면을 새로 쌓지 않는다). */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent.getBooleanExtra(EXTRA_VIEW_ONLY, false)) {
+            viewOnly = true;
+            hideKeyboard();
+        }
+    }
+
+    /** "보러 들어온" 상태는 그 한 번만. 다음에 앱 아이콘으로 열면 평소처럼 바로 입력할 수 있다. */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (viewOnly) {
+            viewOnly = false;
+            getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
+                    | android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
     }
 
     @Override
@@ -795,7 +827,9 @@ public class MainActivity extends Activity {
     }
 
     private void pickPhoto() {
-        Intent pick = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*");
+        // 여러 장을 한 번에 고를 수 있다. 여러 장이면 사진마다 메모가 하나씩 생긴다
+        Intent pick = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*")
+                .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         try {
             startActivityForResult(pick, REQ_PHOTO);
         } catch (ActivityNotFoundException e) {
@@ -811,6 +845,29 @@ public class MainActivity extends Activity {
     }
 
     /** 고르거나 찍은 사진을 저장한다. 입력칸이 비어 있으면 사진에 붙일 글을 물어본다. */
+    /** 사진을 여러 장 골랐을 때: 사진마다 메모를 하나씩 만든다. 입력칸에 쓴 글은 첫 사진에 붙는다. */
+    private void savePhotoNotes(ClipData photos) {
+        int total = Math.min(photos.getItemCount(), MAX_PHOTOS_AT_ONCE);
+        String typed = input.getText().toString().trim();
+        int saved = 0;
+        // 고른 순서대로 쌓이도록 뒤에서부터 저장한다 (목록은 최신이 위)
+        for (int i = total - 1; i >= 0; i--) {
+            Uri one = photos.getItemAt(i).getUri();
+            String name = one == null ? null : NoteStore.importPhoto(this, one);
+            if (name == null) continue;
+            NoteStore.add(this, i == 0 ? typed : "", name);
+            saved++;
+            android.os.SystemClock.sleep(3); // 메모와 사진 파일 이름이 시각이라 겹치지 않게 한다
+        }
+        if (saved > 0 && !typed.isEmpty()) input.setText("");
+        refresh();
+        String message = saved == 0 ? "사진을 불러오지 못했어요" : "사진 메모 " + saved + "개를 만들었어요";
+        if (photos.getItemCount() > MAX_PHOTOS_AT_ONCE) {
+            message += " (한 번에 " + MAX_PHOTOS_AT_ONCE + "장까지)";
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
     private void savePhotoNote(Uri uri) {
         final String name = NoteStore.importPhoto(this, uri);
         if (name == null) {
@@ -879,7 +936,14 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         Uri uri = data == null ? null : data.getData();
         if (requestCode == REQ_PHOTO) {
-            if (resultCode == RESULT_OK && uri != null) savePhotoNote(uri);
+            ClipData many = data == null ? null : data.getClipData();
+            if (resultCode == RESULT_OK && many != null && many.getItemCount() > 1) {
+                savePhotoNotes(many);
+            } else if (resultCode == RESULT_OK && many != null && many.getItemCount() == 1) {
+                savePhotoNote(many.getItemAt(0).getUri());
+            } else if (resultCode == RESULT_OK && uri != null) {
+                savePhotoNote(uri);
+            }
         } else if (requestCode == REQ_CAMERA) {
             Uri shot = cameraUri;
             cameraUri = null;
