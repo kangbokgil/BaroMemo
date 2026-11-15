@@ -5,6 +5,8 @@ import android.text.Spanned;
 import android.graphics.Typeface;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
+import android.text.style.UnderlineSpan;
+import android.util.Patterns;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,9 +32,27 @@ public final class Tags {
         return out;
     }
 
-    /** 해시태그 부분만 색을 바꾼 글. */
+    /** 글 안의 웹 주소들. 주소 앞에 http가 없으면 붙여서 돌려준다. */
+    public static List<String> urls(String text) {
+        List<String> out = new ArrayList<>();
+        if (text == null) return out;
+        Matcher m = Patterns.WEB_URL.matcher(text);
+        while (m.find()) {
+            String url = m.group();
+            if (!url.startsWith("http://") && !url.startsWith("https://")) url = "https://" + url;
+            if (!out.contains(url)) out.add(url);
+        }
+        return out;
+    }
+
+    /** 해시태그는 색과 굵기로, 웹 주소는 색과 밑줄로 표시한 글. */
     public static CharSequence highlight(String text, int color) {
         SpannableString s = new SpannableString(text);
+        Matcher link = Patterns.WEB_URL.matcher(text);
+        while (link.find()) {
+            s.setSpan(new ForegroundColorSpan(color), link.start(), link.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            s.setSpan(new UnderlineSpan(), link.start(), link.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
         Matcher m = TAG.matcher(text);
         while (m.find()) {
             s.setSpan(new ForegroundColorSpan(color), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

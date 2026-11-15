@@ -280,6 +280,9 @@ public class MainActivity extends Activity {
         tabSummary.setVisibility(sum ? View.VISIBLE : View.GONE);
         tabRow.setVisibility(cal || sum ? View.VISIBLE : View.GONE);
         if ((mode == MODE_CALENDAR && !cal) || (mode == MODE_SUMMARY && !sum)) mode = MODE_LIST;
+
+        // 알림창 버튼도 켠 기능에 맞춰 다시 그린다
+        NotificationHelper.show(this, null);
     }
 
     private void showSettings() {
@@ -305,7 +308,7 @@ public class MainActivity extends Activity {
     private void showGuide() {
         String guide =
                 "① 앱을 열지 않고 쓰기\n"
-                + "화면 위를 내려 바로메모 알림의 ‘메모 입력’을 누르면 그 자리에서 저장돼요.\n\n"
+                + "화면 위를 내려 바로메모 알림을 펼치면 ‘메모 입력’, ‘말로 쓰기’, ‘사진·그림’ 버튼이 있어요. 알림 본문을 누르면 앱이 열려요.\n\n"
                 + "② 위젯 꺼내기\n"
                 + "홈 화면 빈 곳을 길게 누르기 → 위젯 → 바로메모를 홈 화면에 놓으세요.\n\n"
                 + "③ 메모 다루기\n"
@@ -969,15 +972,45 @@ public class MainActivity extends Activity {
     private void showActions(final Note target) {
         String title = noteLine(target);
         if (title.length() > 30) title = title.substring(0, 30) + "…";
+        final List<String> urls = Tags.urls(target.text);
+        final List<String> labels = new ArrayList<>();
+        final List<Runnable> actions = new ArrayList<>();
+        if (!urls.isEmpty()) {
+            labels.add(urls.size() == 1 ? "링크 열기" : "링크 열기 (" + urls.size() + "개)");
+            actions.add(() -> openLinks(urls));
+        }
+        labels.add("수정");
+        actions.add(() -> editNote(target));
+        labels.add("복사");
+        actions.add(() -> copyText(noteLine(target)));
+        labels.add("공유");
+        actions.add(() -> shareText(noteLine(target)));
+        labels.add("삭제");
+        actions.add(() -> confirmDelete(target));
         new AlertDialog.Builder(this)
                 .setTitle(title)
-                .setItems(new String[]{"수정", "복사", "공유", "삭제"}, (d, which) -> {
-                    if (which == 0) editNote(target);
-                    else if (which == 1) copyText(noteLine(target));
-                    else if (which == 2) shareText(noteLine(target));
-                    else confirmDelete(target);
-                })
+                .setItems(labels.toArray(new String[0]), (d, which) -> actions.get(which).run())
                 .show();
+    }
+
+    /** 메모 안의 링크를 연다. 여러 개면 어느 것을 열지 고른다. */
+    private void openLinks(final List<String> urls) {
+        if (urls.size() == 1) {
+            openUrl(urls.get(0));
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("어느 링크를 열까요?")
+                .setItems(urls.toArray(new String[0]), (d, which) -> openUrl(urls.get(which)))
+                .show();
+    }
+
+    private void openUrl(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "링크를 열 수 있는 앱이 없어요", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void editNote(final Note target) {
