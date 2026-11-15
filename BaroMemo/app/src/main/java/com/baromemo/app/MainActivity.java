@@ -931,6 +931,21 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** 메모에 붙은 사진을 클립보드에 넣는다. 사진 붙여넣기를 받는 앱(메신저 등)에서 붙여넣을 수 있다. */
+    private void copyPhoto(String photoName) {
+        ClipboardManager cm = getSystemService(ClipboardManager.class);
+        if (cm == null) return;
+        try {
+            Uri uri = PhotoProvider.uriFor(photoName);
+            cm.setPrimaryClip(ClipData.newUri(getContentResolver(), "바로메모 사진", uri));
+            if (Build.VERSION.SDK_INT < 33) {
+                Toast.makeText(this, "사진을 복사했어요", Toast.LENGTH_SHORT).show();
+            }
+        } catch (RuntimeException e) {
+            Toast.makeText(this, "사진을 복사하지 못했어요", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void shareText(String text) {
         Intent send = new Intent(Intent.ACTION_SEND)
                 .setType("text/plain")
@@ -1003,6 +1018,10 @@ public class MainActivity extends Activity {
         actions.add(() -> editNote(target));
         labels.add("복사");
         actions.add(() -> copyText(noteLine(target)));
+        if (target.photo != null) {
+            labels.add("사진 복사");
+            actions.add(() -> copyPhoto(target.photo));
+        }
         labels.add("공유");
         actions.add(() -> shareText(noteLine(target)));
         labels.add("삭제");
