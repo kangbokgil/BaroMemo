@@ -3,6 +3,13 @@ name: Build APK
 on:
   push:
   workflow_dispatch:
+  # 서명 키 보관(캐시)이 만료되지 않도록 매주 한 번 자동으로 빌드한다
+  schedule:
+    - cron: '0 3 * * 1'
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -17,6 +24,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      # 빌드마다 서명이 바뀌면 덮어 설치가 안 된다.
+      # 처음 만들어진 서명 키를 GitHub 캐시에 보관해 두고 다음 빌드부터 같은 키를 쓴다.
+      # (키 파일은 저장소에 올라가지 않는다.)
+      - name: Keep the same signing key between builds
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: baromemo-debug-keystore-v1
 
       - uses: gradle/actions/setup-gradle@v4
         with:
