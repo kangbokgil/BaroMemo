@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="icon_bg">#FF7A59</color>
+    <!-- 앱 아이콘: 밝은 모드는 흰 바탕에 검은 그림, 어두운 모드는 반대 -->
+    <color name="icon_bg">#FFFFFF</color>
+    <color name="icon_fg">#1F2328</color>
     <color name="accent">#FF7A59</color>
     <color name="accent_soft">#FFE7DF</color>
     <color name="bg">#F6F4F1</color>
