@@ -67,6 +67,14 @@ public final class NotificationHelper {
         PendingIntent repostPi = PendingIntent.getBroadcast(ctx, 6, repost,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
+        // 앱(목록 화면)을 바로 여는 버튼
+        Intent appIntent = new Intent(ctx, MainActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent appPi = PendingIntent.getActivity(ctx, 10, appIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Notification.Action openApp = new Notification.Action.Builder(
+                Icon.createWithResource(ctx, R.drawable.ic_list), "바로메모 열기", appPi).build();
+
         Notification n = new Notification.Builder(ctx, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_note)
                 .setContentTitle("바로메모")
@@ -77,6 +85,7 @@ public final class NotificationHelper {
                 .setContentIntent(openQuickInput(ctx, 2))
                 .setDeleteIntent(repostPi)
                 .addAction(replyAction(ctx, 1, null, "메모 입력"))
+                .addAction(openApp)
                 .build();
         nm.notify(NOTIFICATION_ID, n);
     }

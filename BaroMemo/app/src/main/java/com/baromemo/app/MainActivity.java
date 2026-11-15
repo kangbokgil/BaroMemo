@@ -5,13 +5,19 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.TimePickerDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.LruCache;
@@ -33,13 +39,17 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /** 앱 화면: 위에 입력칸, 아래에 목록 / 달력 / 요약 탭. */
 public class MainActivity extends Activity {
     private static final int REQ_NOTIFICATION = 1;
     private static final int REQ_PHOTO = 2;
+    private static final int REQ_CAMERA = 3;
+    private static final int REQ_SPEECH = 4;
     private static final int MODE_LIST = 0;
     private static final int MODE_CALENDAR = 1;
     private static final int MODE_SUMMARY = 2;
@@ -63,7 +73,13 @@ public class MainActivity extends Activity {
     private View summaryPane;
     private TextView summaryText;
 
+    private View bottomBar;
+    private View selectBar;
+    private TextView selCount;
+
     private final List<Note> shown = new ArrayList<>();
+    private final Set<Long> selected = new HashSet<>(); // 선택 모드에서 고른 메모(시간 값)
+    private Uri cameraUri;                               // 사진 찍기 결과가 저장될 곳
     private final NoteAdapter adapter = new NoteAdapter();
     private int mode = MODE_LIST;
     private Calendar month;      // 보고 있는 달의 1일 0시
@@ -88,6 +104,12 @@ public class MainActivity extends Activity {
         list = findViewById(R.id.list);
         summaryPane = findViewById(R.id.summary_pane);
         summaryText = findViewById(R.id.summary_text);
+        bottomBar = findViewById(R.id.bottom_bar);
+        selectBar = findViewById(R.id.select_bar);
+        selCount = findViewById(R.id.sel_count);
+        if (savedInstanceState != null) {
+            cameraUri = savedInstanceState.getParcelable("cameraUri");
+        }
 
         selectedDay = startOfDay(System.currentTimeMillis());
         month = Calendar.getInstance();
@@ -97,7 +119,19 @@ public class MainActivity extends Activity {
         list.setAdapter(adapter);
 
         findViewById(R.id.save).setOnClickListener(v -> saveInput());
-        findViewById(R.id.photo).setOnClickListener(v -> pickPhoto());
+        findViewById(R.id.photo).setOnClickListener(v -> choosePhotoSource());
+        findViewById(R.id.mic).setOnClickListener(v -> startDictation());
+
+        findViewById(R.id.sel_copy).setOnClickListener(v -> {
+            copyText(selectedText());
+            clearSelection();
+        });
+        findViewById(R.id.sel_share).setOnClickListener(v -> {
+            shareText(selectedText());
+            clearSelection();
+        });
+        findViewById(R.id.sel_delete).setOnClickListener(v -> deleteSelected());
+        findViewById(R.id.sel_cancel).setOnClickListener(v -> clearSelection());
         input.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 saveInput();
@@ -136,10 +170,17 @@ public class MainActivity extends Activity {
             weekdays.addView(t, new LinearLayout.LayoutParams(0, dp(24), 1f));
         }
 
-        // 누르면 수정, 길게 누르면 삭제
-        list.setOnItemClickListener((parent, view, position, id) -> editNote(shown.get(position)));
+        // 누르면 메뉴(수정·복사·공유·삭제), 길게 누르면 여러 개 선택
+        list.setOnItemClickListener((parent, view, position, id) -> {
+            Note n = shown.get(position);
+            if (selected.isEmpty()) {
+                showActions(n);
+            } else {
+                toggleSelected(n);
+            }
+        });
         list.setOnItemLongClickListener((parent, view, position, id) -> {
-            confirmDelete(shown.get(position));
+            toggleSelected(shown.get(position));
             return true;
         });
 
@@ -177,10 +218,27 @@ public class MainActivity extends Activity {
         if (mode == MODE_LIST) input.requestFocus();
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("cameraUri", cameraUri);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!selected.isEmpty()) {
+            clearSelection();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     // ───── 탭 ─────
 
     private void setMode(int newMode) {
         mode = newMode;
+        selected.clear();
+        updateSelectionBar();
         styleTab(tabList, mode == MODE_LIST);
         styleTab(tabCalendar, mode == MODE_CALENDAR);
         styleTab(tabSummary, mode == MODE_SUMMARY);
@@ -343,6 +401,34 @@ public class MainActivity extends Activity {
         }
     }
 
+    // ───── 사진 ─────
+
+    private void choosePhotoSource() {
+        new AlertDialog.Builder(this)
+                .setItems(new String[]{"사진 찍기", "갤러리에서 고르기"}, (d, which) -> {
+                    if (which == 0) takePhoto(); else pickPhoto();
+                })
+                .show();
+    }
+
+    /** 카메라를 열어 찍은 사진을 입력칸의 글과 함께 메모로 저장한다. 찍은 사진은 갤러리에도 남는다. */
+    private void takePhoto() {
+        try {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, "baromemo_" + System.currentTimeMillis() + ".jpg");
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+            cameraUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (cameraUri == null) throw new IllegalStateException("no uri");
+            Intent capture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    .putExtra(MediaStore.EXTRA_OUTPUT, cameraUri)
+                    .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivityForResult(capture, REQ_CAMERA);
+        } catch (Exception e) {
+            cameraUri = null;
+            Toast.makeText(this, "카메라를 열 수 없어요", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     /** 갤러리에서 사진을 골라, 입력칸의 글과 함께 메모로 저장한다. */
     private void pickPhoto() {
         Intent pick = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*");
@@ -353,13 +439,8 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != REQ_PHOTO || resultCode != RESULT_OK || data == null || data.getData() == null) {
-            return;
-        }
-        String name = NoteStore.importPhoto(this, data.getData());
+    private void savePhotoNote(Uri uri) {
+        String name = NoteStore.importPhoto(this, uri);
         if (name == null) {
             Toast.makeText(this, "사진을 불러오지 못했어요", Toast.LENGTH_SHORT).show();
             return;
@@ -367,6 +448,136 @@ public class MainActivity extends Activity {
         NoteStore.add(this, input.getText(), name);
         input.setText("");
         refresh();
+    }
+
+    // ───── 받아쓰기 ─────
+
+    private void startDictation() {
+        Intent speech = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ko-KR")
+                .putExtra(RecognizerIntent.EXTRA_PROMPT, "말씀하세요");
+        try {
+            startActivityForResult(speech, REQ_SPEECH);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "이 폰에서는 받아쓰기를 쓸 수 없어요", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_PHOTO) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                savePhotoNote(data.getData());
+            }
+        } else if (requestCode == REQ_CAMERA) {
+            Uri uri = cameraUri;
+            cameraUri = null;
+            if (uri == null) return;
+            if (resultCode == RESULT_OK) {
+                savePhotoNote(uri);
+            } else {
+                try {
+                    getContentResolver().delete(uri, null, null); // 취소하면 빈 항목 정리
+                } catch (Exception e) {
+                    // 정리 실패는 무시
+                }
+            }
+        } else if (requestCode == REQ_SPEECH) {
+            if (resultCode != RESULT_OK || data == null) return;
+            ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (results == null || results.isEmpty()) return;
+            String before = input.getText().toString();
+            String joined = before.isEmpty() ? results.get(0) : before + " " + results.get(0);
+            input.setText(joined);
+            input.setSelection(input.length());
+        }
+    }
+
+    // ───── 복사·공유 ─────
+
+    private void copyText(String text) {
+        ClipboardManager cm = getSystemService(ClipboardManager.class);
+        if (cm == null) return;
+        cm.setPrimaryClip(ClipData.newPlainText("바로메모", text));
+        if (Build.VERSION.SDK_INT < 33) {
+            Toast.makeText(this, "복사했어요", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void shareText(String text) {
+        Intent send = new Intent(Intent.ACTION_SEND)
+                .setType("text/plain")
+                .putExtra(Intent.EXTRA_TEXT, text);
+        startActivity(Intent.createChooser(send, "메모 내보내기"));
+    }
+
+    private static String noteLine(Note n) {
+        return (n.photo != null ? "📷 " : "") + n.text;
+    }
+
+    // ───── 여러 개 선택 ─────
+
+    private void toggleSelected(Note n) {
+        if (!selected.remove(n.time)) selected.add(n.time);
+        updateSelectionBar();
+        adapter.notifyDataSetChanged();
+    }
+
+    private void clearSelection() {
+        selected.clear();
+        updateSelectionBar();
+        adapter.notifyDataSetChanged();
+    }
+
+    private void updateSelectionBar() {
+        boolean on = !selected.isEmpty();
+        selectBar.setVisibility(on ? View.VISIBLE : View.GONE);
+        bottomBar.setVisibility(on ? View.GONE : View.VISIBLE);
+        selCount.setText(selected.size() + "개 선택");
+    }
+
+    /** 선택한 메모를 시간순으로, 날짜·시간과 함께 글로 만든다. */
+    private String selectedText() {
+        List<Note> all = NoteStore.load(this); // 최신이 앞
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd (E) HH:mm", Locale.KOREA);
+        StringBuilder sb = new StringBuilder();
+        for (int i = all.size() - 1; i >= 0; i--) {
+            Note n = all.get(i);
+            if (!selected.contains(n.time)) continue;
+            sb.append(fmt.format(new Date(n.time))).append("  ").append(noteLine(n)).append('\n');
+        }
+        return sb.toString().trim();
+    }
+
+    private void deleteSelected() {
+        final List<Long> targets = new ArrayList<>(selected);
+        new AlertDialog.Builder(this)
+                .setMessage("선택한 메모 " + targets.size() + "개를 삭제할까요?")
+                .setPositiveButton("삭제", (d, w) -> {
+                    for (long t : targets) NoteStore.delete(this, t);
+                    clearSelection();
+                    refresh();
+                })
+                .setNegativeButton("취소", null)
+                .show();
+    }
+
+    // ───── 메모 한 개 메뉴·수정·삭제 ─────
+
+    private void showActions(final Note target) {
+        String title = noteLine(target);
+        if (title.length() > 30) title = title.substring(0, 30) + "…";
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setItems(new String[]{"수정", "복사", "공유", "삭제"}, (d, which) -> {
+                    if (which == 0) editNote(target);
+                    else if (which == 1) copyText(noteLine(target));
+                    else if (which == 2) shareText(noteLine(target));
+                    else confirmDelete(target);
+                })
+                .show();
     }
 
     private void editNote(final Note target) {
@@ -458,9 +669,13 @@ public class MainActivity extends Activity {
             Note n = shown.get(position);
             TextView time = convertView.findViewById(R.id.row_time);
             TextView text = convertView.findViewById(R.id.row_text);
-            time.setText(mode == MODE_CALENDAR
+            boolean picked = selected.contains(n.time);
+            String when = mode == MODE_CALENDAR
                     ? timeOnly.format(new Date(n.time))
-                    : NoteStore.shortTime(n.time));
+                    : NoteStore.shortTime(n.time);
+            time.setText(picked ? "✓ " + when : when);
+            time.setTextColor(getColor(picked ? R.color.accent : R.color.sub));
+            time.setTypeface(null, picked ? Typeface.BOLD : Typeface.NORMAL);
             text.setText(n.text);
             text.setVisibility(n.text.isEmpty() ? View.GONE : View.VISIBLE);
 
@@ -471,7 +686,6 @@ public class MainActivity extends Activity {
             String emoji = Sticker.pick(n.text);
             if (emoji != null) {
                 sticker.setText(emoji);
-                sticker.setRotation((n.time / 1000) % 2 == 0 ? -8f : 8f);
                 sticker.setVisibility(View.VISIBLE);
             } else {
                 sticker.setVisibility(View.GONE);
@@ -488,7 +702,6 @@ public class MainActivity extends Activity {
             }
             if (bmp != null) {
                 photo.setImageBitmap(bmp);
-                photo.setRotation((n.time / 1000) % 2 == 0 ? 1.5f : -1.5f);
                 photo.setVisibility(View.VISIBLE);
             } else {
                 photo.setImageDrawable(null);
