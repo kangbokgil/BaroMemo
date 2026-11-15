@@ -4,15 +4,51 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@color/bg</item>
-        <item name="android:colorAccent">@color/accent</item>
         <item name="android:statusBarColor">@color/bg</item>
         <item name="android:navigationBarColor">@color/bg</item>
         <item name="android:windowLightStatusBar">@bool/light_bars</item>
         <item name="android:windowLightNavigationBar">@bool/light_bars</item>
+        <item name="bmAccent">@color/p_simple</item>
+        <item name="bmAccentSoft">@color/p_simple_soft</item>
+        <item name="bmOnAccent">@color/p_simple_on</item>
     </style>
 
     <style name="QuickTheme" parent="@android:style/Theme.DeviceDefault.Light.Dialog.NoActionBar">
-        <item name="android:colorAccent">@color/accent</item>
+        <item name="bmAccent">@color/p_simple</item>
+        <item name="bmAccentSoft">@color/p_simple_soft</item>
+        <item name="bmOnAccent">@color/p_simple_on</item>
+    </style>
+
+    <!-- 테마 색 묶음: 화면이 열릴 때 고른 것을 덧씌운다 -->
+    <style name="Palette.Simple" parent="">
+        <item name="bmAccent">@color/p_simple</item>
+        <item name="bmAccentSoft">@color/p_simple_soft</item>
+        <item name="bmOnAccent">@color/p_simple_on</item>
+    </style>
+    <style name="Palette.Coral" parent="">
+        <item name="bmAccent">@color/p_coral</item>
+        <item name="bmAccentSoft">@color/p_coral_soft</item>
+        <item name="bmOnAccent">@color/p_white</item>
+    </style>
+    <style name="Palette.Mint" parent="">
+        <item name="bmAccent">@color/p_mint</item>
+        <item name="bmAccentSoft">@color/p_mint_soft</item>
+        <item name="bmOnAccent">@color/p_white</item>
+    </style>
+    <style name="Palette.Lavender" parent="">
+        <item name="bmAccent">@color/p_lavender</item>
+        <item name="bmAccentSoft">@color/p_lavender_soft</item>
+        <item name="bmOnAccent">@color/p_white</item>
+    </style>
+    <style name="Palette.Blue" parent="">
+        <item name="bmAccent">@color/p_blue</item>
+        <item name="bmAccentSoft">@color/p_blue_soft</item>
+        <item name="bmOnAccent">@color/p_white</item>
+    </style>
+    <style name="Palette.Pink" parent="">
+        <item name="bmAccent">@color/p_pink</item>
+        <item name="bmAccentSoft">@color/p_pink_soft</item>
+        <item name="bmOnAccent">@color/p_white</item>
     </style>
 
     <style name="Tab">

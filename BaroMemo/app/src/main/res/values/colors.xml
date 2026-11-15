@@ -7,6 +7,22 @@
     <color name="surface">#FFFFFF</color>
     <color name="text">#1F1F1F</color>
     <color name="sub">#8A8A8A</color>
+    <!-- 테마 색 -->
+    <color name="p_simple">#2B2B2E</color>
+    <color name="p_simple_soft">#E6E6EA</color>
+    <color name="p_simple_on">#FFFFFF</color>
+    <color name="p_coral">#FF7A59</color>
+    <color name="p_coral_soft">#FFE7DF</color>
+    <color name="p_mint">#2BB39A</color>
+    <color name="p_mint_soft">#DDF3EE</color>
+    <color name="p_lavender">#8E7CE6</color>
+    <color name="p_lavender_soft">#EAE6FB</color>
+    <color name="p_blue">#3D7DF5</color>
+    <color name="p_blue_soft">#E1EBFE</color>
+    <color name="p_pink">#F06292</color>
+    <color name="p_pink_soft">#FDE3EC</color>
+    <color name="p_white">#FFFFFF</color>
+
     <!-- 메모 카드 종이 색 (다이어리 느낌) -->
     <color name="paper1">#FFF4E6</color>
     <color name="paper2">#FDECEF</color>

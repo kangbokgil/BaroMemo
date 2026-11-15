@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 테마 색: 강조색, 옅은 강조색, 강조색 위 글자색 -->
+    <attr name="bmAccent" format="color" />
+    <attr name="bmAccentSoft" format="color" />
+    <attr name="bmOnAccent" format="color" />
+</resources>
