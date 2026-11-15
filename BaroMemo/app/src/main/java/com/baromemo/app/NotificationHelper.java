@@ -60,6 +60,7 @@ public final class NotificationHelper {
         NotificationChannel ch = new NotificationChannel(
                 CHANNEL_ID, "빠른 메모 입력", NotificationManager.IMPORTANCE_LOW);
         ch.setShowBadge(false);
+        ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC); // 잠금화면에서도 보이게
         nm.createNotificationChannel(ch);
 
         // 알림을 밀어서 지워도 다시 띄운다
@@ -80,6 +81,7 @@ public final class NotificationHelper {
                 .setContentTitle("바로메모")
                 .setContentText(status == null ? "‘메모 입력’을 눌러 바로 적기" : status)
                 .setOngoing(true)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setShowWhen(false)
                 .setOnlyAlertOnce(true)
                 .setContentIntent(openQuickInput(ctx, 2))
@@ -96,12 +98,14 @@ public final class NotificationHelper {
         NotificationManager nm = ctx.getSystemService(NotificationManager.class);
         NotificationChannel ch = new NotificationChannel(
                 REMINDER_CHANNEL_ID, "기록 알림", NotificationManager.IMPORTANCE_DEFAULT);
+        ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
         nm.createNotificationChannel(ch);
 
         Notification n = new Notification.Builder(ctx, REMINDER_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_note)
                 .setContentTitle("지금 어때요?")
                 .setContentText("한 줄만 남겨 보세요")
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setAutoCancel(true)
                 .setContentIntent(openQuickInput(ctx, 8))
                 .addAction(replyAction(ctx, 7, ACTION_REMINDER_REPLY, "바로 적기"))

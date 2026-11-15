@@ -31,6 +31,9 @@ public class QuickInputActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         Ui.applyPalette(this);
         super.onCreate(savedInstanceState);
+        // 잠금화면 위에서도 입력창이 뜨게 한다 (쓰기만 가능, 기존 메모는 보이지 않음)
+        setShowWhenLocked(true);
+        setTurnScreenOn(true);
         setContentView(R.layout.activity_quick);
         getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         getWindow().setGravity(Gravity.TOP);
