@@ -20,8 +20,10 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /** 메모를 폰 안의 파일(notes.json)에, 사진을 photos 폴더에 저장한다. 최신 메모가 맨 앞. */
 public final class NoteStore {
@@ -188,6 +190,45 @@ public final class NoteStore {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /** 직접 그린 그림을 사진 폴더에 저장한다. 성공하면 파일 이름, 실패하면 null. */
+    public static String saveBitmap(Context ctx, Bitmap bmp) {
+        try {
+            File dir = new File(ctx.getFilesDir(), PHOTO_DIR);
+            //noinspection ResultOfMethodCallIgnored
+            dir.mkdirs();
+            String name = System.currentTimeMillis() + ".jpg";
+            try (FileOutputStream out = new FileOutputStream(new File(dir, name))) {
+                bmp.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            }
+            return name;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 백업 파일의 메모를 지금 메모에 합친다(이미 있는 것은 건너뜀). 더해진 개수를 돌려준다. */
+    public static int importNotes(Context ctx, String json) throws JSONException {
+        JSONArray arr = new JSONArray(json);
+        int added = 0;
+        synchronized (NoteStore.class) {
+            List<Note> notes = load(ctx);
+            Set<Long> have = new HashSet<>();
+            for (Note n : notes) have.add(n.time);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.getJSONObject(i);
+                long t = o.getLong("t");
+                if (have.contains(t)) continue;
+                notes.add(new Note(t, o.getString("x"), o.has("p") ? o.getString("p") : null));
+                have.add(t);
+                added++;
+            }
+            notes.sort((a, b) -> Long.compare(b.time, a.time));
+            save(ctx, notes);
+        }
+        NoteWidget.updateAll(ctx);
+        return added;
     }
 
     /** 목록·보기용으로 사진을 줄여서 읽는다. 없거나 실패하면 null. */

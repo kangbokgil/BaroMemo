@@ -45,15 +45,20 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** 앱 화면: 위에 입력칸, 아래에 목록 / 달력 / 요약 탭. */
+/** 앱 화면: 위에 입력칸, 아래에 목록 / 달력 / 요약 탭. 설정(⚙)에서 쓸 기능과 테마를 고른다. */
 public class MainActivity extends Activity {
     private static final int REQ_NOTIFICATION = 1;
     private static final int REQ_PHOTO = 2;
     private static final int REQ_CAMERA = 3;
     private static final int REQ_SPEECH = 4;
+    private static final int REQ_BACKUP = 5;
+    private static final int REQ_RESTORE = 6;
+    private static final int REQ_DRAW = 7;
+
     private static final int MODE_LIST = 0;
     private static final int MODE_CALENDAR = 1;
     private static final int MODE_SUMMARY = 2;
+
     private static final int[] PAPERS = {
             R.color.paper1, R.color.paper2, R.color.paper3, R.color.paper4, R.color.paper5
     };
@@ -62,84 +67,82 @@ public class MainActivity extends Activity {
     private EditText input;
     private EditText search;
     private TextView empty;
-    private TextView reminder;
+    private View micButton;
+    private View attachButton;
+    private View tabRow;
     private TextView tabList;
     private TextView tabCalendar;
     private TextView tabSummary;
     private View calendarPane;
     private TextView calTitle;
+    private View calWeekdays;
     private LinearLayout calGrid;
     private TextView dayTitle;
     private ListView list;
     private View summaryPane;
     private TextView summaryText;
-
-    private View bottomBar;
     private View selectBar;
     private TextView selCount;
+    private View tagScroll;
+    private LinearLayout tagRow;
+    private View inputTagScroll;
+    private LinearLayout inputTagRow;
 
     private final List<Note> shown = new ArrayList<>();
     private final Set<Long> selected = new HashSet<>(); // 선택 모드에서 고른 메모(시간 값)
-    private boolean calCollapsed;                        // 달력을 접어 하루 화면으로 볼지
-    private View calWeekdays;
-    private View tagScroll;
-    private LinearLayout tagRow;
-    private Uri cameraUri;                               // 사진 찍기 결과가 저장될 곳
     private final NoteAdapter adapter = new NoteAdapter();
     private int mode = MODE_LIST;
-    private Calendar month;      // 보고 있는 달의 1일 0시
-    private long selectedDay;    // 달력에서 고른 날의 0시
+    private Calendar month;        // 보고 있는 달의 1일 0시
+    private long selectedDay;      // 달력에서 고른 날의 0시
+    private boolean calCollapsed;  // 달력을 접어 하루 화면으로 볼지
+    private Uri cameraUri;         // 사진 찍기 결과가 저장될 곳
+
+    // 켜 둔 기능 (설정에서 바뀌면 다시 읽는다)
+    private boolean featSticker;
+    private boolean featPaper;
+    private boolean featTags;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Ui.applyPalette(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         input = findViewById(R.id.input);
         search = findViewById(R.id.search);
         empty = findViewById(R.id.empty);
-        reminder = findViewById(R.id.reminder);
+        micButton = findViewById(R.id.mic);
+        attachButton = findViewById(R.id.photo);
+        tabRow = findViewById(R.id.tab_row);
         tabList = findViewById(R.id.tab_list);
         tabCalendar = findViewById(R.id.tab_calendar);
         tabSummary = findViewById(R.id.tab_summary);
         calendarPane = findViewById(R.id.calendar_pane);
         calTitle = findViewById(R.id.cal_title);
+        calWeekdays = findViewById(R.id.cal_weekdays);
         calGrid = findViewById(R.id.cal_grid);
         dayTitle = findViewById(R.id.day_title);
         list = findViewById(R.id.list);
         summaryPane = findViewById(R.id.summary_pane);
         summaryText = findViewById(R.id.summary_text);
-        bottomBar = findViewById(R.id.bottom_bar);
         selectBar = findViewById(R.id.select_bar);
         selCount = findViewById(R.id.sel_count);
-        calWeekdays = findViewById(R.id.cal_weekdays);
         tagScroll = findViewById(R.id.tag_scroll);
         tagRow = findViewById(R.id.tag_row);
+        inputTagScroll = findViewById(R.id.input_tag_scroll);
+        inputTagRow = findViewById(R.id.input_tag_row);
+
         if (savedInstanceState != null) {
             cameraUri = savedInstanceState.getParcelable("cameraUri");
         }
 
         selectedDay = startOfDay(System.currentTimeMillis());
         month = Calendar.getInstance();
-        month.setTimeInMillis(selectedDay);
-        month.set(Calendar.DAY_OF_MONTH, 1);
+        syncMonthToSelectedDay();
 
         list.setAdapter(adapter);
 
         findViewById(R.id.save).setOnClickListener(v -> saveInput());
-        findViewById(R.id.photo).setOnClickListener(v -> choosePhotoSource());
-        findViewById(R.id.mic).setOnClickListener(v -> startDictation());
-
-        findViewById(R.id.sel_copy).setOnClickListener(v -> {
-            copyText(selectedText());
-            clearSelection();
-        });
-        findViewById(R.id.sel_share).setOnClickListener(v -> {
-            shareText(selectedText());
-            clearSelection();
-        });
-        findViewById(R.id.sel_delete).setOnClickListener(v -> deleteSelected());
-        findViewById(R.id.sel_cancel).setOnClickListener(v -> clearSelection());
         input.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 saveInput();
@@ -147,6 +150,9 @@ public class MainActivity extends Activity {
             }
             return false;
         });
+        attachButton.setOnClickListener(v -> chooseAttachment());
+        micButton.setOnClickListener(v -> startDictation());
+        findViewById(R.id.settings).setOnClickListener(v -> showSettings());
 
         search.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -158,17 +164,14 @@ public class MainActivity extends Activity {
         tabCalendar.setOnClickListener(v -> setMode(MODE_CALENDAR));
         tabSummary.setOnClickListener(v -> setMode(MODE_SUMMARY));
 
-        // 펼친 상태에서는 달, 접은 상태에서는 하루씩 이동
+        // 달력: 펼친 상태에서는 달, 접은 상태에서는 하루씩 이동. 제목을 누르면 접거나 편다.
         findViewById(R.id.cal_prev).setOnClickListener(v -> moveCalendar(-1));
         findViewById(R.id.cal_next).setOnClickListener(v -> moveCalendar(1));
-        // 제목을 누르면 달력을 접거나 편다
         calTitle.setOnClickListener(v -> {
             calCollapsed = !calCollapsed;
             syncMonthToSelectedDay();
             refresh();
         });
-
-        // 요일 줄
         LinearLayout weekdays = findViewById(R.id.cal_weekdays);
         for (String w : WEEKDAYS) {
             TextView t = new TextView(this);
@@ -179,7 +182,7 @@ public class MainActivity extends Activity {
             weekdays.addView(t, new LinearLayout.LayoutParams(0, dp(24), 1f));
         }
 
-        // 누르면 메뉴(수정·복사·공유·삭제), 길게 누르면 여러 개 선택
+        // 메모: 누르면 메뉴(수정·복사·공유·삭제), 길게 누르면 여러 개 선택
         list.setOnItemClickListener((parent, view, position, id) -> {
             Note n = shown.get(position);
             if (selected.isEmpty()) {
@@ -193,14 +196,16 @@ public class MainActivity extends Activity {
             return true;
         });
 
-        findViewById(R.id.share).setOnClickListener(v -> {
-            Intent send = new Intent(Intent.ACTION_SEND)
-                    .setType("text/plain")
-                    .putExtra(Intent.EXTRA_TEXT, NoteStore.exportText(this));
-            startActivity(Intent.createChooser(send, "메모 전체 내보내기"));
+        findViewById(R.id.sel_copy).setOnClickListener(v -> {
+            copyText(selectedText());
+            clearSelection();
         });
-
-        reminder.setOnClickListener(v -> onReminderClick());
+        findViewById(R.id.sel_share).setOnClickListener(v -> {
+            shareText(selectedText());
+            clearSelection();
+        });
+        findViewById(R.id.sel_delete).setOnClickListener(v -> deleteSelected());
+        findViewById(R.id.sel_cancel).setOnClickListener(v -> clearSelection());
 
         if (Build.VERSION.SDK_INT >= 33
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -210,6 +215,8 @@ public class MainActivity extends Activity {
             NotificationHelper.show(this, null);
         }
         Reminder.schedule(this);
+
+        applyFeatureToggles();
         setMode(MODE_LIST);
     }
 
@@ -223,7 +230,6 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         refresh();
-        reminder.setText(Reminder.label(this));
         if (mode == MODE_LIST) input.requestFocus();
     }
 
@@ -240,6 +246,120 @@ public class MainActivity extends Activity {
         } else {
             super.onBackPressed();
         }
+    }
+
+    // ───── 설정: 쓸 기능 고르기 · 테마 · 알림 · 백업 ─────
+
+    /** 설정에서 켜고 끈 기능을 화면에 반영한다. */
+    private void applyFeatureToggles() {
+        featSticker = Prefs.on(this, Prefs.STICKER);
+        featPaper = Prefs.on(this, Prefs.PAPER);
+        featTags = Prefs.on(this, Prefs.TAGS);
+
+        micButton.setVisibility(Prefs.on(this, Prefs.VOICE) ? View.VISIBLE : View.GONE);
+        boolean attach = Prefs.on(this, Prefs.PHOTO) || Prefs.on(this, Prefs.DRAW);
+        attachButton.setVisibility(attach ? View.VISIBLE : View.GONE);
+
+        boolean cal = Prefs.on(this, Prefs.CALENDAR);
+        boolean sum = Prefs.on(this, Prefs.SUMMARY);
+        tabCalendar.setVisibility(cal ? View.VISIBLE : View.GONE);
+        tabSummary.setVisibility(sum ? View.VISIBLE : View.GONE);
+        tabRow.setVisibility(cal || sum ? View.VISIBLE : View.GONE);
+        if ((mode == MODE_CALENDAR && !cal) || (mode == MODE_SUMMARY && !sum)) mode = MODE_LIST;
+    }
+
+    private void showSettings() {
+        String[] items = {"쓸 기능 고르기", "테마 색: " + Prefs.THEME_NAMES[Prefs.theme(this)],
+                Reminder.label(this), "내보내기 · 백업"};
+        new AlertDialog.Builder(this)
+                .setTitle("설정")
+                .setItems(items, (d, which) -> {
+                    if (which == 0) showFeatureDialog();
+                    else if (which == 1) showThemeDialog();
+                    else if (which == 2) showReminderDialog();
+                    else showExportMenu();
+                })
+                .show();
+    }
+
+    private void showFeatureDialog() {
+        boolean[] checked = new boolean[Prefs.KEYS.length];
+        for (int i = 0; i < checked.length; i++) checked[i] = Prefs.on(this, Prefs.KEYS[i]);
+        new AlertDialog.Builder(this)
+                .setTitle("쓸 기능 고르기")
+                .setMultiChoiceItems(Prefs.LABELS, checked,
+                        (d, which, isChecked) -> Prefs.set(this, Prefs.KEYS[which], isChecked))
+                .setPositiveButton("확인", null)
+                .setOnDismissListener(d -> {
+                    applyFeatureToggles();
+                    setMode(mode);
+                })
+                .show();
+    }
+
+    private void showThemeDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("테마 색")
+                .setSingleChoiceItems(Prefs.THEME_NAMES, Prefs.theme(this), (d, which) -> {
+                    Prefs.setTheme(this, which);
+                    d.dismiss();
+                    recreate(); // 새 색으로 화면을 다시 그린다
+                })
+                .show();
+    }
+
+    /** 기록 알림: 원하는 시간을 원하는 만큼. 하나도 없으면 알림이 오지 않는다. */
+    private void showReminderDialog() {
+        final List<Integer> times = Reminder.times(this);
+        final int n = times.size();
+        String[] items = new String[n + (n == 0 ? 1 : 2)];
+        for (int i = 0; i < n; i++) items[i] = Reminder.format(times.get(i)) + "   (누르면 삭제)";
+        items[n] = "＋ 알림 시간 추가";
+        if (n > 0) items[n + 1] = "모두 끄기";
+        new AlertDialog.Builder(this)
+                .setTitle(n == 0 ? "기록 알림 (지금은 꺼짐)" : "기록 알림 · 하루 " + n + "번")
+                .setItems(items, (d, which) -> {
+                    if (which < n) {
+                        Reminder.remove(this, times.get(which));
+                        showReminderDialog();
+                    } else if (which == n) {
+                        new TimePickerDialog(this, (view, h, m) -> {
+                            Reminder.add(this, h, m);
+                            showReminderDialog();
+                        }, 21, 0, true).show();
+                    } else {
+                        Reminder.clear(this);
+                        Toast.makeText(this, "기록 알림을 모두 껐어요", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setPositiveButton("닫기", null)
+                .show();
+    }
+
+    private void showExportMenu() {
+        String[] items = {"글로 내보내기 (공유)", "백업 파일 만들기 (사진 포함)", "백업 파일에서 복원"};
+        new AlertDialog.Builder(this)
+                .setTitle("내보내기 · 백업")
+                .setItems(items, (d, which) -> {
+                    try {
+                        if (which == 0) {
+                            shareText(NoteStore.exportText(this));
+                        } else if (which == 1) {
+                            String day = new SimpleDateFormat("yyyyMMdd", Locale.KOREA).format(new Date());
+                            startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                                    .addCategory(Intent.CATEGORY_OPENABLE)
+                                    .setType("application/zip")
+                                    .putExtra(Intent.EXTRA_TITLE, "바로메모_백업_" + day + ".zip"), REQ_BACKUP);
+                        } else {
+                            startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                                    .addCategory(Intent.CATEGORY_OPENABLE)
+                                    .setType("*/*"), REQ_RESTORE);
+                        }
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(this, "파일을 고를 수 있는 앱이 없어요", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
     }
 
     // ───── 탭 ─────
@@ -262,7 +382,7 @@ public class MainActivity extends Activity {
 
     private void styleTab(TextView tab, boolean on) {
         tab.setBackgroundResource(on ? R.drawable.bg_tab_selected : 0);
-        tab.setTextColor(getColor(on ? R.color.accent : R.color.sub));
+        tab.setTextColor(on ? Ui.accent(this) : getColor(R.color.sub));
         tab.setTypeface(null, on ? Typeface.BOLD : Typeface.NORMAL);
     }
 
@@ -303,7 +423,7 @@ public class MainActivity extends Activity {
             summaryText.setText(Summary.build(this));
         }
 
-        buildTagChips(all);
+        buildTagBars(all);
         adapter.notifyDataSetChanged();
         if (emptyMessage != null) {
             empty.setText(emptyMessage);
@@ -315,11 +435,20 @@ public class MainActivity extends Activity {
 
     // ───── 해시태그 ─────
 
-    /** 목록 탭 위쪽에 많이 쓴 해시태그를 버튼으로 보여 준다. 누르면 그 태그만 모아 본다. */
-    private void buildTagChips(List<Note> all) {
+    /** 입력칸 아래 "태그 붙이기" 줄과, 목록 탭의 "태그로 모아 보기" 줄을 만든다. */
+    private void buildTagBars(List<Note> all) {
+        // 입력칸에 붙이는 태그 버튼
+        if (featTags) {
+            TagBar.fill(this, inputTagRow, input, all, R.drawable.bg_card);
+            inputTagScroll.setVisibility(View.VISIBLE);
+        } else {
+            inputTagScroll.setVisibility(View.GONE);
+        }
+
+        // 태그로 모아 보기
         tagRow.removeAllViews();
         List<Map.Entry<String, Integer>> tags = Tags.counts(all);
-        if (mode != MODE_LIST || tags.isEmpty()) {
+        if (!featTags || mode != MODE_LIST || tags.isEmpty()) {
             tagScroll.setVisibility(View.GONE);
             return;
         }
@@ -329,12 +458,12 @@ public class MainActivity extends Activity {
             final String tag = tags.get(i).getKey();
             boolean on = tag.equals(current);
             TextView chip = new TextView(this);
-            chip.setText(tag);
+            chip.setText(tag + " " + tags.get(i).getValue());
             chip.setTextSize(13);
             chip.setGravity(Gravity.CENTER);
             chip.setPadding(dp(14), 0, dp(14), 0);
             chip.setBackgroundResource(on ? R.drawable.bg_tab_selected : R.drawable.bg_card);
-            chip.setTextColor(getColor(on ? R.color.accent : R.color.sub));
+            chip.setTextColor(on ? Ui.accent(this) : getColor(R.color.sub));
             chip.setOnClickListener(v -> search.setText(tag.equals(search.getText().toString().trim()) ? "" : tag));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, dp(34));
@@ -401,6 +530,7 @@ public class MainActivity extends Activity {
         }
 
         long today = startOfDay(System.currentTimeMillis());
+        int accent = Ui.accent(this);
         int rows = (firstDow + days + 6) / 7;
         int day = 1 - firstDow;
         calGrid.removeAllViews();
@@ -427,7 +557,7 @@ public class MainActivity extends Activity {
                     cell.setText(day + "\n" + mark);
 
                     boolean isToday = dayStart == today;
-                    cell.setTextColor(getColor(isToday ? R.color.accent : R.color.text));
+                    cell.setTextColor(isToday ? accent : getColor(R.color.text));
                     cell.setTypeface(null, isToday ? Typeface.BOLD : Typeface.NORMAL);
                     if (dayStart == selectedDay) {
                         cell.setBackgroundResource(R.drawable.bg_cell_selected);
@@ -460,7 +590,7 @@ public class MainActivity extends Activity {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
-    // ───── 메모 저장·수정·삭제 ─────
+    // ───── 메모 저장 ─────
 
     private void saveInput() {
         if (NoteStore.add(this, input.getText())) {
@@ -469,17 +599,31 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ───── 사진 ─────
+    // ───── 사진 · 그림 붙이기 ─────
 
-    private void choosePhotoSource() {
+    private void chooseAttachment() {
+        final List<String> labels = new ArrayList<>();
+        final List<Runnable> actions = new ArrayList<>();
+        if (Prefs.on(this, Prefs.PHOTO)) {
+            labels.add("사진 찍기");
+            actions.add(this::takePhoto);
+            labels.add("갤러리에서 고르기");
+            actions.add(this::pickPhoto);
+        }
+        if (Prefs.on(this, Prefs.DRAW)) {
+            labels.add("그림 그리기");
+            actions.add(this::openDrawing);
+        }
+        if (actions.size() == 1) {
+            actions.get(0).run();
+            return;
+        }
         new AlertDialog.Builder(this)
-                .setItems(new String[]{"사진 찍기", "갤러리에서 고르기"}, (d, which) -> {
-                    if (which == 0) takePhoto(); else pickPhoto();
-                })
+                .setItems(labels.toArray(new String[0]), (d, which) -> actions.get(which).run())
                 .show();
     }
 
-    /** 카메라를 열어 찍은 사진을 입력칸의 글과 함께 메모로 저장한다. 찍은 사진은 갤러리에도 남는다. */
+    /** 카메라를 열어 찍는다. 찍은 사진은 갤러리에도 남는다. */
     private void takePhoto() {
         try {
             ContentValues values = new ContentValues();
@@ -497,7 +641,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** 갤러리에서 사진을 골라, 입력칸의 글과 함께 메모로 저장한다. */
     private void pickPhoto() {
         Intent pick = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*");
         try {
@@ -507,15 +650,61 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** 그리기 화면을 연다. 입력칸에 적어 둔 글은 그림과 함께 저장된다. */
+    private void openDrawing() {
+        Intent draw = new Intent(this, DrawActivity.class)
+                .putExtra(DrawActivity.EXTRA_TEXT, input.getText().toString());
+        startActivityForResult(draw, REQ_DRAW);
+    }
+
+    /** 고르거나 찍은 사진을 저장한다. 입력칸이 비어 있으면 사진에 붙일 글을 물어본다. */
     private void savePhotoNote(Uri uri) {
-        String name = NoteStore.importPhoto(this, uri);
+        final String name = NoteStore.importPhoto(this, uri);
         if (name == null) {
             Toast.makeText(this, "사진을 불러오지 못했어요", Toast.LENGTH_SHORT).show();
             return;
         }
-        NoteStore.add(this, input.getText(), name);
-        input.setText("");
-        refresh();
+        String typed = input.getText().toString().trim();
+        if (!typed.isEmpty()) {
+            NoteStore.add(this, typed, name);
+            input.setText("");
+            refresh();
+            return;
+        }
+
+        final EditText caption = new EditText(this);
+        caption.setHint("사진에 붙일 글 (안 써도 돼요)");
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(20), dp(8), dp(20), 0);
+        Bitmap bmp = NoteStore.loadPhoto(this, name, 2);
+        if (bmp != null) {
+            ImageView iv = new ImageView(this);
+            iv.setImageBitmap(bmp);
+            iv.setAdjustViewBounds(true);
+            iv.setMaxHeight(dp(240));
+            box.addView(iv, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+        box.addView(caption, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        new AlertDialog.Builder(this)
+                .setTitle("사진 메모")
+                .setView(box)
+                .setPositiveButton("저장", (d, w) -> {
+                    NoteStore.add(this, caption.getText(), name);
+                    refresh();
+                })
+                .setNegativeButton("글 없이 저장", (d, w) -> {
+                    NoteStore.add(this, "", name);
+                    refresh();
+                })
+                .setOnCancelListener(d -> {
+                    NoteStore.add(this, "", name);
+                    refresh();
+                })
+                .show();
     }
 
     // ───── 받아쓰기 ─────
@@ -535,35 +724,50 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Uri uri = data == null ? null : data.getData();
         if (requestCode == REQ_PHOTO) {
-            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
-                savePhotoNote(data.getData());
-            }
+            if (resultCode == RESULT_OK && uri != null) savePhotoNote(uri);
         } else if (requestCode == REQ_CAMERA) {
-            Uri uri = cameraUri;
+            Uri shot = cameraUri;
             cameraUri = null;
-            if (uri == null) return;
+            if (shot == null) return;
             if (resultCode == RESULT_OK) {
-                savePhotoNote(uri);
+                savePhotoNote(shot);
             } else {
                 try {
-                    getContentResolver().delete(uri, null, null); // 취소하면 빈 항목 정리
+                    getContentResolver().delete(shot, null, null); // 취소하면 빈 항목 정리
                 } catch (Exception e) {
                     // 정리 실패는 무시
                 }
+            }
+        } else if (requestCode == REQ_DRAW) {
+            if (resultCode == RESULT_OK) {
+                input.setText("");
+                refresh();
+            }
+        } else if (requestCode == REQ_BACKUP) {
+            if (resultCode == RESULT_OK && uri != null) {
+                boolean ok = Backup.export(this, uri);
+                Toast.makeText(this, ok ? "백업 파일을 만들었어요" : "백업에 실패했어요", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQ_RESTORE) {
+            if (resultCode == RESULT_OK && uri != null) {
+                int added = Backup.restore(this, uri);
+                Toast.makeText(this, added < 0 ? "바로메모 백업 파일이 아니에요"
+                        : "메모 " + added + "개를 복원했어요", Toast.LENGTH_SHORT).show();
+                refresh();
             }
         } else if (requestCode == REQ_SPEECH) {
             if (resultCode != RESULT_OK || data == null) return;
             ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             if (results == null || results.isEmpty()) return;
             String before = input.getText().toString();
-            String joined = before.isEmpty() ? results.get(0) : before + " " + results.get(0);
-            input.setText(joined);
+            input.setText(before.isEmpty() ? results.get(0) : before + " " + results.get(0));
             input.setSelection(input.length());
         }
     }
 
-    // ───── 복사·공유 ─────
+    // ───── 복사 · 공유 ─────
 
     private void copyText(String text) {
         ClipboardManager cm = getSystemService(ClipboardManager.class);
@@ -600,9 +804,7 @@ public class MainActivity extends Activity {
     }
 
     private void updateSelectionBar() {
-        boolean on = !selected.isEmpty();
-        selectBar.setVisibility(on ? View.VISIBLE : View.GONE);
-        bottomBar.setVisibility(on ? View.GONE : View.VISIBLE);
+        selectBar.setVisibility(selected.isEmpty() ? View.GONE : View.VISIBLE);
         selCount.setText(selected.size() + "개 선택");
     }
 
@@ -632,7 +834,7 @@ public class MainActivity extends Activity {
                 .show();
     }
 
-    // ───── 메모 한 개 메뉴·수정·삭제 ─────
+    // ───── 메모 한 개: 메뉴 · 수정 · 삭제 ─────
 
     private void showActions(final Note target) {
         String title = noteLine(target);
@@ -684,39 +886,13 @@ public class MainActivity extends Activity {
 
     private void confirmDelete(final Note target) {
         new AlertDialog.Builder(this)
-                .setMessage("이 메모를 삭제할까요?\n\n" + (target.photo != null ? "📷 " : "") + target.text)
+                .setMessage("이 메모를 삭제할까요?\n\n" + noteLine(target))
                 .setPositiveButton("삭제", (d, w) -> {
                     NoteStore.delete(this, target.time);
                     refresh();
                 })
                 .setNegativeButton("취소", null)
                 .show();
-    }
-
-    // ───── 기록 알림 ─────
-
-    private void onReminderClick() {
-        if (!Reminder.isOn(this)) {
-            pickReminderTime();
-            return;
-        }
-        new AlertDialog.Builder(this)
-                .setItems(new String[]{"시간 바꾸기", "알림 끄기"}, (d, which) -> {
-                    if (which == 0) {
-                        pickReminderTime();
-                    } else {
-                        Reminder.turnOff(this);
-                        reminder.setText(Reminder.label(this));
-                    }
-                })
-                .show();
-    }
-
-    private void pickReminderTime() {
-        new TimePickerDialog(this, (view, h, m) -> {
-            Reminder.set(this, true, h, m);
-            reminder.setText(Reminder.label(this));
-        }, Reminder.hour(this), Reminder.minute(this), true).show();
     }
 
     // ───── 목록 한 줄 ─────
@@ -733,25 +909,36 @@ public class MainActivity extends Activity {
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
                 convertView = getLayoutInflater().inflate(R.layout.row_note, parent, false);
+                ImageView img = convertView.findViewById(R.id.row_photo);
+                img.setClipToOutline(true); // 사진 모서리를 둥글게
             }
             Note n = shown.get(position);
+            int accent = Ui.accent(MainActivity.this);
             TextView time = convertView.findViewById(R.id.row_time);
             TextView text = convertView.findViewById(R.id.row_text);
+
             boolean picked = selected.contains(n.time);
             String when = mode == MODE_CALENDAR
                     ? timeOnly.format(new Date(n.time))
                     : NoteStore.shortTime(n.time);
             time.setText(picked ? "✓ " + when : when);
-            time.setTextColor(getColor(picked ? R.color.accent : R.color.sub));
+            time.setTextColor(picked ? accent : getColor(R.color.sub));
             time.setTypeface(null, picked ? Typeface.BOLD : Typeface.NORMAL);
-            text.setText(Tags.highlight(n.text, getColor(R.color.accent)));
+
+            text.setText(Tags.highlight(n.text, accent));
             text.setVisibility(n.text.isEmpty() ? View.GONE : View.VISIBLE);
 
-            // 다이어리 느낌: 메모마다 종이 색을 달리하고, 내용에 맞는 스티커를 붙인다
-            int paper = PAPERS[(int) ((n.time / 1000) % PAPERS.length)];
-            convertView.setBackgroundTintList(ColorStateList.valueOf(getColor(paper)));
+            // 종이 색(켰을 때만)
+            if (featPaper) {
+                int paper = PAPERS[(int) ((n.time / 1000) % PAPERS.length)];
+                convertView.setBackgroundTintList(ColorStateList.valueOf(getColor(paper)));
+            } else {
+                convertView.setBackgroundTintList(null);
+            }
+
+            // 내용에 맞는 스티커(켰을 때만)
             TextView sticker = convertView.findViewById(R.id.row_sticker);
-            String emoji = Sticker.pick(n.text);
+            String emoji = featSticker ? Sticker.pick(n.text) : null;
             if (emoji != null) {
                 sticker.setText(emoji);
                 sticker.setVisibility(View.VISIBLE);
