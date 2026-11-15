@@ -6,6 +6,8 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import java.text.SimpleDateFormat;
@@ -24,9 +26,17 @@ import java.util.Locale;
 public class NoteWidget extends AppWidgetProvider {
     private static final String[] MOODS = {"😊", "🙂", "😐", "😔", "😡"};
     private static final int[] MOOD_IDS = {R.id.w_e1, R.id.w_e2, R.id.w_e3, R.id.w_e4, R.id.w_e5};
+    private static final int[] LINE_IDS = {R.id.w_m1, R.id.w_m2, R.id.w_m3, R.id.w_m4, R.id.w_m5,
+            R.id.w_m6, R.id.w_m7, R.id.w_m8, R.id.w_m9, R.id.w_m10};
 
     @Override
     public void onUpdate(Context ctx, AppWidgetManager mgr, int[] ids) {
+        updateAll(ctx);
+    }
+
+    /** 위젯 크기를 바꾸면 "최근 메모" 위젯에 보이는 줄 수를 다시 맞춘다. */
+    @Override
+    public void onAppWidgetOptionsChanged(Context ctx, AppWidgetManager mgr, int id, Bundle options) {
         updateAll(ctx);
     }
 
@@ -44,7 +54,13 @@ public class NoteWidget extends AppWidgetProvider {
     private static void update(Context ctx, AppWidgetManager mgr, Class<?> type, int layout, List<Note> notes) {
         int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, type));
         if (ids == null || ids.length == 0) return;
+        // 크기가 위젯마다 다를 수 있어서 하나씩 그린다
+        for (int id : ids) {
+            mgr.updateAppWidget(id, build(ctx, mgr, id, layout, notes));
+        }
+    }
 
+    private static RemoteViews build(Context ctx, AppWidgetManager mgr, int id, int layout, List<Note> notes) {
         RemoteViews v = new RemoteViews(ctx.getPackageName(), layout);
         // 모양마다 가진 버튼이 다르다. 그 모양에 없는 버튼은 연결해도 그냥 무시된다.
         v.setOnClickPendingIntent(R.id.w_input, activity(ctx, 20, new Intent(ctx, QuickInputActivity.class)));
@@ -63,16 +79,32 @@ public class NoteWidget extends AppWidgetProvider {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         }
 
-        // 최근 메모 두 줄
-        v.setTextViewText(R.id.w_m1, notes.isEmpty() ? "아직 메모가 없어요" : line(notes.get(0)));
-        v.setTextViewText(R.id.w_m2, notes.size() > 1 ? line(notes.get(1)) : "");
-
-        mgr.updateAppWidget(ids, v);
+        // 최근 메모: 위젯 높이에 들어가는 만큼 보여 준다 (입력바와 여백을 뺀 높이를 한 줄 높이로 나눔)
+        if (layout == R.layout.widget_c) {
+            Bundle options = mgr.getAppWidgetOptions(id);
+            boolean landscape = ctx.getResources().getConfiguration().orientation
+                    == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+            int height = options == null ? 0 : options.getInt(landscape
+                    ? AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT
+                    : AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0);
+            float fontScale = ctx.getResources().getConfiguration().fontScale;
+            int fit = height <= 0 ? 2 : (int) ((height - 78) / (19 * fontScale + 4));
+            int lines = Math.max(1, Math.min(LINE_IDS.length, fit));
+            for (int i = 0; i < LINE_IDS.length; i++) {
+                boolean show = i < lines && (i < notes.size() || i == 0);
+                v.setViewVisibility(LINE_IDS[i], show ? View.VISIBLE : View.GONE);
+                if (show) {
+                    v.setTextViewText(LINE_IDS[i], notes.isEmpty() ? "아직 메모가 없어요" : line(notes.get(i)));
+                }
+            }
+        }
+        return v;
     }
 
     private static String line(Note n) {
         String time = new SimpleDateFormat("HH:mm", Locale.KOREA).format(new Date(n.time));
-        return time + "  " + (n.photo != null ? "📷 " : "") + n.text;
+        String text = n.text.replace('\n', ' ');
+        return time + "  " + (n.photo != null ? (text.isEmpty() ? "📷 사진" : "📷 ") : "") + text;
     }
 
     private static PendingIntent activity(Context ctx, int requestCode, Intent intent) {
