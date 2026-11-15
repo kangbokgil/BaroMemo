@@ -14,9 +14,10 @@ public final class Prefs {
     public static final String CALENDAR = "calendar";
     public static final String SUMMARY = "summary";
     public static final String PAPER = "paper";
+    public static final String PREVIEW = "preview";
 
     /** 설정 화면에 나오는 순서. */
-    public static final String[] KEYS = {MOOD, TAGS, PHOTO, DRAW, VOICE, STICKER, CALENDAR, SUMMARY, PAPER};
+    public static final String[] KEYS = {MOOD, TAGS, PHOTO, DRAW, VOICE, STICKER, CALENDAR, SUMMARY, PAPER, PREVIEW};
     public static final String[] LABELS = {
             "기분 이모지 버튼",
             "해시태그 버튼",
@@ -27,6 +28,7 @@ public final class Prefs {
             "달력 탭",
             "요약 탭",
             "메모마다 종이 색 다르게",
+            "알림에 방금 쓴 메모 내용 보이기",
     };
 
     public static final String[] THEME_NAMES = {"심플", "코랄", "민트", "라벤더", "블루", "핑크"};
@@ -41,9 +43,19 @@ public final class Prefs {
         return ctx.getSharedPreferences("settings", Context.MODE_PRIVATE);
     }
 
-    /** 기능이 켜져 있는지. 종이 색만 기본이 꺼짐이고 나머지는 기본이 켜짐. */
+    /** 기능이 켜져 있는지. 종이 색과 알림 내용 보이기는 기본이 꺼짐이고 나머지는 기본이 켜짐. */
     public static boolean on(Context ctx, String key) {
-        return prefs(ctx).getBoolean(key, !PAPER.equals(key));
+        boolean defaultOn = !PAPER.equals(key) && !PREVIEW.equals(key);
+        return prefs(ctx).getBoolean(key, defaultOn);
+    }
+
+    /** 처음 실행 때 사용법 안내를 이미 보여 줬는지. */
+    public static boolean guideShown(Context ctx) {
+        return prefs(ctx).getBoolean("guide_shown", false);
+    }
+
+    public static void setGuideShown(Context ctx) {
+        prefs(ctx).edit().putBoolean("guide_shown", true).apply();
     }
 
     public static void set(Context ctx, String key, boolean value) {

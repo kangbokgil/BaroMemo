@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -168,10 +169,42 @@ public class DrawActivity extends Activity {
             invalidate();
         }
 
+        /** 그린 부분만 남기고 빈 여백은 잘라 낸 그림. */
         Bitmap toBitmap() {
-            Bitmap bmp = Bitmap.createBitmap(Math.max(1, getWidth()), Math.max(1, getHeight()), Bitmap.Config.ARGB_8888);
+            int w = Math.max(1, getWidth());
+            int h = Math.max(1, getHeight());
+
+            // 선이 지나간 영역 구하기
+            RectF all = new RectF();
+            RectF one = new RectF();
+            float maxStroke = 0f;
+            boolean first = true;
+            for (int i = 0; i < paths.size(); i++) {
+                paths.get(i).computeBounds(one, true);
+                if (first) {
+                    all.set(one);
+                    first = false;
+                } else {
+                    all.union(one);
+                }
+                maxStroke = Math.max(maxStroke, paints.get(i).getStrokeWidth());
+            }
+            float pad = maxStroke + 24f * getResources().getDisplayMetrics().density;
+            int left = Math.max(0, (int) Math.floor(all.left - pad));
+            int top = Math.max(0, (int) Math.floor(all.top - pad));
+            int right = Math.min(w, (int) Math.ceil(all.right + pad));
+            int bottom = Math.min(h, (int) Math.ceil(all.bottom + pad));
+            if (first || right - left < 1 || bottom - top < 1) {
+                left = 0;
+                top = 0;
+                right = w;
+                bottom = h;
+            }
+
+            Bitmap bmp = Bitmap.createBitmap(right - left, bottom - top, Bitmap.Config.ARGB_8888);
             Canvas c = new Canvas(bmp);
             c.drawColor(Color.WHITE);
+            c.translate(-left, -top);
             drawPaths(c);
             return bmp;
         }

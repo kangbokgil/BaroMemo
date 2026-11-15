@@ -19,6 +19,6 @@ public class NoteReplyReceiver extends BroadcastReceiver {
             NotificationManager nm = ctx.getSystemService(NotificationManager.class);
             nm.cancel(NotificationHelper.REMINDER_ID);
         }
-        NotificationHelper.show(ctx, saved ? "저장됨 ✓ " + text.toString().trim() : null);
+        NotificationHelper.show(ctx, saved ? NotificationHelper.savedStatus(ctx, text.toString().trim()) : null);
     }
 }

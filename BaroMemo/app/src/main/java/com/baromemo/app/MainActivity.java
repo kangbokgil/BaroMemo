@@ -218,6 +218,12 @@ public class MainActivity extends Activity {
 
         applyFeatureToggles();
         setMode(MODE_LIST);
+
+        // 처음 실행했을 때 한 번만 사용법을 보여 준다
+        if (!Prefs.guideShown(this)) {
+            Prefs.setGuideShown(this);
+            showGuide();
+        }
     }
 
     @Override
@@ -270,16 +276,61 @@ public class MainActivity extends Activity {
 
     private void showSettings() {
         String[] items = {"쓸 기능 고르기", "테마 색: " + Prefs.THEME_NAMES[Prefs.theme(this)],
-                Reminder.label(this), "내보내기 · 백업"};
+                Reminder.label(this), "내보내기 · 백업", "사용법 보기", "의견 보내기"};
         new AlertDialog.Builder(this)
                 .setTitle("설정")
                 .setItems(items, (d, which) -> {
                     if (which == 0) showFeatureDialog();
                     else if (which == 1) showThemeDialog();
                     else if (which == 2) showReminderDialog();
-                    else showExportMenu();
+                    else if (which == 3) showExportMenu();
+                    else if (which == 4) showGuide();
+                    else sendFeedback();
                 })
                 .show();
+    }
+
+    /** 숨은 조작을 알려 주는 사용법 안내. 처음 실행 때 한 번, 그 뒤에는 설정에서 다시 볼 수 있다. */
+    private void showGuide() {
+        String guide =
+                "① 앱을 열지 않고 쓰기\n"
+                + "화면 위를 내려 바로메모 알림의 ‘메모 입력’을 누르면 그 자리에서 저장돼요.\n\n"
+                + "② 위젯 꺼내기\n"
+                + "홈 화면 빈 곳을 길게 누르기 → 위젯 → 바로메모를 홈 화면에 놓으세요.\n\n"
+                + "③ 메모 다루기\n"
+                + "누르면 수정·복사·공유·삭제, 길게 누르면 여러 개를 골라 한 번에 처리해요.\n\n"
+                + "④ 달력\n"
+                + "날짜를 누르면 그날 화면으로 넘어가요. 맨 위 날짜 줄을 누르면 달력이 다시 펴져요.\n\n"
+                + "⑤ 내 입맛대로\n"
+                + "오른쪽 위 ⚙에서 쓸 기능만 켜고, 테마 색·기록 알림·백업을 정할 수 있어요.\n\n"
+                + "⑥ 메모 지키기\n"
+                + "메모는 이 폰에만 저장돼요. 가끔 ⚙ → 내보내기 · 백업 → 백업 파일 만들기를 해 두세요.";
+        new AlertDialog.Builder(this)
+                .setTitle("바로메모 사용법")
+                .setMessage(guide)
+                .setPositiveButton("시작하기", null)
+                .show();
+    }
+
+    /** 써 본 사람이 만든 사람에게 의견을 보내기 쉽게, 틀이 잡힌 글을 공유 창으로 넘긴다. */
+    private void sendFeedback() {
+        String version = "?";
+        try {
+            version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            // 버전을 못 읽으면 물음표로 둔다
+        }
+        String template =
+                "[바로메모 의견]\n"
+                + "· 좋았던 점: \n"
+                + "· 불편했던 점: \n"
+                + "· 있었으면 하는 것: \n"
+                + "· 최근 3일 동안 쓴 횟수: \n\n"
+                + "(앱 " + version + " / " + Build.MODEL + " / 안드로이드 " + Build.VERSION.RELEASE + ")";
+        Intent send = new Intent(Intent.ACTION_SEND)
+                .setType("text/plain")
+                .putExtra(Intent.EXTRA_TEXT, template);
+        startActivity(Intent.createChooser(send, "만든 사람에게 의견 보내기"));
     }
 
     private void showFeatureDialog() {

@@ -25,6 +25,11 @@ public final class NotificationHelper {
 
     private NotificationHelper() {}
 
+    /** 저장 직후 알림에 띄울 문구. 잠금화면에서도 보이므로 메모 내용은 설정에서 켰을 때만 넣는다. */
+    public static String savedStatus(Context ctx, String text) {
+        return Prefs.on(ctx, Prefs.PREVIEW) ? "저장됨 ✓ " + text : "저장됨 ✓";
+    }
+
     private static boolean canPost(Context ctx) {
         return Build.VERSION.SDK_INT < 33
                 || ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)

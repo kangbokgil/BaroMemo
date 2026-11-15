@@ -29,7 +29,7 @@ public class ShareActivity extends Activity {
             saved = NoteStore.add(this, body, photo);
         }
         Toast.makeText(this, saved ? "바로메모에 저장됨" : "저장할 내용이 없어요", Toast.LENGTH_SHORT).show();
-        if (saved) NotificationHelper.show(this, "저장됨 ✓ 공유한 내용");
+        if (saved) NotificationHelper.show(this, "저장됨 ✓");
         finish();
     }
 }

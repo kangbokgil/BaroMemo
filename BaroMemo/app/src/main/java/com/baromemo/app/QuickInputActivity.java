@@ -114,7 +114,7 @@ public class QuickInputActivity extends Activity {
         }
         if (NoteStore.add(this, text)) {
             Toast.makeText(this, "저장됨", Toast.LENGTH_SHORT).show();
-            NotificationHelper.show(this, "저장됨 ✓ " + text);
+            NotificationHelper.show(this, NotificationHelper.savedStatus(this, text));
         }
         input.setText("");
         finish();
