@@ -30,6 +30,17 @@
             android:textSize="16sp" />
 
         <TextView
+            android:id="@+id/quick_mic"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:clickable="true"
+            android:contentDescription="받아쓰기"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="🎤"
+            android:textSize="20sp" />
+
+        <TextView
             android:id="@+id/quick_save"
             android:layout_width="wrap_content"
             android:layout_height="40dp"

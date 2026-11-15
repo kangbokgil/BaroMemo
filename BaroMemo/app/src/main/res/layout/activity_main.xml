@@ -50,8 +50,19 @@
                 android:textSize="16sp" />
 
             <TextView
+                android:id="@+id/mic"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:clickable="true"
+                android:contentDescription="받아쓰기"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="🎤"
+                android:textSize="20sp" />
+
+            <TextView
                 android:id="@+id/photo"
-                android:layout_width="44dp"
+                android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:clickable="true"
                 android:contentDescription="사진 첨부"
@@ -221,6 +232,7 @@
         </ScrollView>
 
         <LinearLayout
+            android:id="@+id/bottom_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
@@ -228,6 +240,24 @@
 
             <TextView android:id="@+id/reminder" style="@style/Flat" android:text="기록 알림: 꺼짐" />
             <TextView android:id="@+id/share" style="@style/Flat" android:text="전체 내보내기" />
+        </LinearLayout>
+
+        <!-- 여러 개 선택했을 때 나오는 줄 -->
+        <LinearLayout
+            android:id="@+id/select_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/bg_tab_selected"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView android:id="@+id/sel_count" style="@style/Flat" android:textColor="@color/accent" android:textStyle="bold" />
+            <TextView android:id="@+id/sel_copy" style="@style/Flat" android:text="복사" android:textColor="@color/text" />
+            <TextView android:id="@+id/sel_share" style="@style/Flat" android:text="내보내기" android:textColor="@color/text" />
+            <TextView android:id="@+id/sel_delete" style="@style/Flat" android:text="삭제" android:textColor="@color/text" />
+            <TextView android:id="@+id/sel_cancel" style="@style/Flat" android:text="취소" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
