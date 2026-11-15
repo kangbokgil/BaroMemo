@@ -51,12 +51,30 @@
             android:paddingStart="18dp"
             android:paddingEnd="18dp"
             android:text="저장"
-            android:textColor="#FFFFFF"
+            android:textColor="?attr/bmOnAccent"
             android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- 태그 버튼 -->
+    <HorizontalScrollView
+        android:id="@+id/quick_tag_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/quick_tag_row"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
+    <!-- 기분 이모지 -->
     <LinearLayout
+        android:id="@+id/emo_row"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="6dp"

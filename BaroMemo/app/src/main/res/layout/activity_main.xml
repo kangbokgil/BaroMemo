@@ -10,19 +10,40 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:paddingStart="16dp"
-        android:paddingTop="14dp"
+        android:paddingTop="10dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="4dp">
+        android:paddingBottom="8dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- 제목 + 설정 -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="4dp"
-            android:paddingBottom="12dp"
-            android:text="바로메모"
-            android:textColor="@color/text"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingStart="4dp"
+                android:text="바로메모"
+                android:textColor="@color/text"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/settings"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:clickable="true"
+                android:contentDescription="설정"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="⚙"
+                android:textColor="@color/sub"
+                android:textSize="22sp" />
+        </LinearLayout>
 
         <!-- 입력 -->
         <LinearLayout
@@ -65,11 +86,12 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:clickable="true"
-                android:contentDescription="사진 첨부"
+                android:contentDescription="사진·그림 붙이기"
                 android:focusable="true"
                 android:gravity="center"
-                android:text="📷"
-                android:textSize="20sp" />
+                android:text="＋"
+                android:textColor="@color/sub"
+                android:textSize="24sp" />
 
             <TextView
                 android:id="@+id/save"
@@ -82,16 +104,33 @@
                 android:paddingStart="18dp"
                 android:paddingEnd="18dp"
                 android:text="저장"
-                android:textColor="#FFFFFF"
+                android:textColor="?attr/bmOnAccent"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 탭 -->
-        <LinearLayout
+        <!-- 입력칸에 바로 붙이는 태그 버튼 -->
+        <HorizontalScrollView
+            android:id="@+id/input_tag_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/input_tag_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- 탭 -->
+        <LinearLayout
+            android:id="@+id/tab_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal">
 
             <TextView android:id="@+id/tab_list" style="@style/Tab" android:text="목록" />
@@ -115,7 +154,7 @@
             android:textColorHint="@color/sub"
             android:textSize="14sp" />
 
-        <!-- 목록 탭: 해시태그 모음 -->
+        <!-- 목록 탭: 태그로 모아 보기 -->
         <HorizontalScrollView
             android:id="@+id/tag_scroll"
             android:layout_width="match_parent"
@@ -196,6 +235,7 @@
                 android:orientation="vertical" />
         </LinearLayout>
 
+        <!-- 달력 탭: 고른 날의 요약 -->
         <TextView
             android:id="@+id/day_title"
             android:layout_width="match_parent"
@@ -254,29 +294,17 @@
                 android:textSize="15sp" />
         </ScrollView>
 
-        <LinearLayout
-            android:id="@+id/bottom_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
-
-            <TextView android:id="@+id/reminder" style="@style/Flat" android:text="기록 알림: 꺼짐" />
-            <TextView android:id="@+id/share" style="@style/Flat" android:text="전체 내보내기" />
-        </LinearLayout>
-
-        <!-- 여러 개 선택했을 때 나오는 줄 -->
+        <!-- 여러 개 선택했을 때만 나오는 줄 -->
         <LinearLayout
             android:id="@+id/select_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
+            android:layout_marginTop="6dp"
             android:background="@drawable/bg_tab_selected"
             android:orientation="horizontal"
             android:visibility="gone">
 
-            <TextView android:id="@+id/sel_count" style="@style/Flat" android:textColor="@color/accent" android:textStyle="bold" />
+            <TextView android:id="@+id/sel_count" style="@style/Flat" android:textColor="?attr/bmAccent" android:textStyle="bold" />
             <TextView android:id="@+id/sel_copy" style="@style/Flat" android:text="복사" android:textColor="@color/text" />
             <TextView android:id="@+id/sel_share" style="@style/Flat" android:text="내보내기" android:textColor="@color/text" />
             <TextView android:id="@+id/sel_delete" style="@style/Flat" android:text="삭제" android:textColor="@color/text" />
