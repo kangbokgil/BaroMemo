@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 상태 표시줄·알림 버튼용 단색 아이콘: 원근 종이 + 펜 + 잔상.
-     단색이라 펜과 종이가 한 덩어리로 보이지 않도록, 펜이 지나가는 자리의 종이를 비워 두었다. -->
+     단색이라 펜촉과 펜 둘레는 종이를 비워서(검게) 표현한다. 앱 아이콘과 같은 방식. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp"
     android:viewportWidth="24" android:viewportHeight="24">
     <!-- 잔상 -->
-    <path android:pathData="M13,8.4L16.4,3.7" android:strokeColor="#FFFFFFFF" android:strokeAlpha="0.45"
+    <path android:pathData="M13.3,8.2L16.6,3.6" android:strokeColor="#FFFFFFFF" android:strokeAlpha="0.45"
         android:strokeWidth="2.8" android:strokeLineCap="round" />
-    <!-- 종이: 펜 둘레를 따라 파낸 모양 -->
-    <path android:pathData="M1.5,14.5L12,10L12.91,10.43L10.19,14.18L11.8,17.3L15.21,17.82L18.6,13.14L22.5,15L11,21.5Z"
+    <!-- 종이: 펜촉과 펜 둘레를 파낸 모양 -->
+    <path android:pathData="M1.5,14.5L12,10L13.69,10.8L12.59,12.32L12.7,16.6L16.8,15.37L18.46,13.08L22.5,15L11,21.5Z"
         android:fillColor="#FFFFFFFF" />
-    <!-- 펜 -->
-    <path android:pathData="M13.4,15L20.9,4.7" android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="3" android:strokeLineCap="round" />
+    <!-- 펜 몸통: 아래는 반듯하게, 위는 둥글게 -->
+    <path android:pathData="M16.25,14.6L13.49,12.6L19.13,4.83A1.7,1.7 0 0 1 21.88,6.83Z"
+        android:fillColor="#FFFFFFFF" />
 </vector>
