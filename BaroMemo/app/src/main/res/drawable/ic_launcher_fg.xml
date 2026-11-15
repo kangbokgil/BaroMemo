@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 앱 아이콘: 원근으로 놓인 종이에 펜이 닿아 있고, 펜 뒤로 잔상이 남는다.
+     밝은 모드에서는 흰 바탕에 검은 그림, 어두운 모드에서는 검은 바탕에 흰 그림. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <group android:translateX="30" android:translateY="30" android:scaleX="2" android:scaleY="2">
-        <path android:fillColor="#FFFFFFFF"
-            android:pathData="M3,17.25V21h3.75L17.81,9.94l-3.75,-3.75L3,17.25zM20.71,7.04c0.39,-0.39 0.39,-1.02 0,-1.41l-2.34,-2.34c-0.39,-0.39 -1.02,-0.39 -1.41,0l-1.83,1.83 3.75,3.75 1.83,-1.83z" />
-    </group>
+    <!-- 잔상 -->
+    <path android:pathData="M39,50L56,27" android:strokeColor="@color/icon_fg" android:strokeAlpha="0.22"
+        android:strokeWidth="9" android:strokeLineCap="round" />
+    <path android:pathData="M50,50L67,27" android:strokeColor="@color/icon_fg" android:strokeAlpha="0.48"
+        android:strokeWidth="9" android:strokeLineCap="round" />
+    <!-- 종이 -->
+    <path android:pathData="M26,61L60,47L86,63L50,81Z" android:fillColor="@color/icon_fg"
+        android:strokeColor="@color/icon_fg" android:strokeWidth="3" android:strokeLineJoin="round" />
+    <!-- 방금 쓴 획 -->
+    <path android:pathData="M37,64l11,-3" android:strokeColor="@color/icon_bg"
+        android:strokeWidth="4" android:strokeLineCap="round" />
+    <!-- 펜 -->
+    <path android:pathData="M61,52L78,27" android:strokeColor="@color/icon_bg"
+        android:strokeWidth="15" android:strokeLineCap="round" />
+    <path android:pathData="M61,52L78,27" android:strokeColor="@color/icon_fg"
+        android:strokeWidth="9" android:strokeLineCap="round" />
+    <path android:pathData="M52,63l3.5,-11l7.5,6Z" android:fillColor="@color/icon_bg"
+        android:strokeColor="@color/icon_bg" android:strokeWidth="2" android:strokeLineJoin="round" />
 </vector>
