@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="icon_bg">#FF7A59</color>
+    <color name="accent">#FF7A59</color>
+    <color name="accent_soft">#FFE7DF</color>
+    <color name="bg">#F6F4F1</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="text">#1F1F1F</color>
+    <color name="sub">#8A8A8A</color>
+    <!-- 메모 카드 종이 색 (다이어리 느낌) -->
+    <color name="paper1">#FFF4E6</color>
+    <color name="paper2">#FDECEF</color>
+    <color name="paper3">#EAF4EC</color>
+    <color name="paper4">#EAF0FB</color>
+    <color name="paper5">#F4ECFA</color>
 </resources>
