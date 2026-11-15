@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+    <TextView android:id="@+id/w_input" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:gravity="center" android:lineSpacingExtra="2dp"
+        android:text="✏️\n글" android:textColor="@color/sub" android:textSize="13sp" />
+    <TextView android:id="@+id/w_voice" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:gravity="center" android:lineSpacingExtra="2dp"
+        android:text="🎤\n말" android:textColor="@color/sub" android:textSize="13sp" />
+    <TextView android:id="@+id/w_photo" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:gravity="center" android:lineSpacingExtra="2dp"
+        android:text="📷\n사진" android:textColor="@color/sub" android:textSize="13sp" />
+    <TextView android:id="@+id/w_draw" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:gravity="center" android:lineSpacingExtra="2dp"
+        android:text="🖌️\n그림" android:textColor="@color/sub" android:textSize="13sp" />
+</LinearLayout>
